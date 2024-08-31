@@ -1,18 +1,4 @@
-# ROS2 with Foundation Models
-
-## LLM features/Task Adaptation
-- Chain-of-Thought Prompting
-- Few-shot fine tuning
-- In-context learning(ICL)
-- re-prompting teqniques
-- Fine tuning with LoRA
-- Function call task adaptation
-
-## LLM Capabalities
-- Task Planning with LLM
-- Motion Planning with LLM
-- LLM as translators: AutoTAMP
-- LMM as trajectory generators: https://arxiv.org/pdf/2310.11604 
+# ROS2 with AI Models
 
 ## ROS2 LLM 
 - This repository is derived from [ROS-LLM](https://github.com/Auromix/ROS-LLM). 
