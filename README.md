@@ -1,6 +1,6 @@
-# ROS2 with AI Models
+# ROS2 packages with AI Models
 
-## ROS2 LLM 
+## LLM 
 - This repository is derived from [ROS-LLM](https://github.com/Auromix/ROS-LLM). 
 - Runs locally on machine without AWS
 
