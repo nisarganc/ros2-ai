@@ -58,25 +58,23 @@ class OakInput(Node):
         self.declare_parameter('turtlebot_name', '/turtle2')
         self.turtlebot_name = self.get_parameter('turtlebot_name').get_parameter_value().string_value
 
-        self.undock_client = ActionClient(self, Undock, '/'+self.turtlebot_name+'/undock')
+        self.undock_action_client = ActionClient(self, Undock, '/'+self.turtlebot_name+'/undock')
+        self.undock_callback()
+
         self.is_turning = False
         self.cmd_publisher = self.create_publisher(Twist, '/'+self.turtlebot_name+'/cmd_vel', 0)
-
-        self.undock_callback()
         self.create_timer(0.5, self.move_callback)
 
         self.oak_message_subscriber = self.create_subscription(
             Image, '/'+self.turtlebot_name+'/oakd/rgb/preview/image_raw', self.image_callback, 0
         )
         self.oak_message_subscriber_id = self.create_subscription( 
-            CameraInfo, '/'+self.turtlebot_name+'/oakd/rgb/preview/camera_info', self.image_callback, 0)
+            CameraInfo, '/'+self.turtlebot_name+'/oakd/rgb/preview/camera_info', self.image_info, 0)
+        
         self.bridge = CvBridge()
 
 
-
-    def image_callback(self, msg):
-        self.get_logger().info('Receiving image data...')
-        
+    def image_callback(self, msg):        
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
             
@@ -85,6 +83,10 @@ class OakInput(Node):
         
         except Exception as e:
             self.get_logger().error(f'Error converting image: {e}')
+
+    def image_info(self, msg):
+        self.get_logger().info(f' {self.turtlebot_name} camera Info: {msg.header.stamp}')
+
 
     def publish_string(self, string_to_send, publisher_to_use):
 
@@ -103,7 +105,7 @@ class OakInput(Node):
             msg.angular.z = random.uniform(-1, 1)  
             msg.linear.x = 0.0
         else:
-            msg.linear.x = 0.1 #random.uniform(0.0, 0.2)  
+            msg.linear.x = 0.1 
             msg.angular.z = 0.0  
 
         self.is_turning = not self.is_turning
@@ -112,29 +114,20 @@ class OakInput(Node):
             
 
     def undock_callback(self):
-        pass
 
-        # while not self.undock_client.wait_for_server(timeout_sec=1.0):
-        #     self.get_logger().info('waiting for Undock action server')
+        goal_msg = Undock.Goal()
+        self.undock_action_client.wait_for_server()
+        goal_future = self.undock_action_client.send_goal_async(goal_msg)
 
-        # self.get_logger().info('Undock action server is available. Sending goal...') 
-        # goal_msg = Undock.Goal()
-        # self.send_goal_future = self.undock_client.send_goal_async(goal_msg)
+        rclpy.spin_until_future_complete(self, goal_future)
 
-        # if self.undock_client.wait_for_server(timeout_sec=120.0):
-        #     self.get_logger().info('Undocking')
-        #     goal_msg = Undock.Goal()  
-        #     self.send_goal_future = self.undock_client.send_goal_async(goal_msg)
-        # else:
-        #     msg = Twist()
-        #     msg.linear.x = -0.5
-        #     msg.angular.z = 0.0
-        #     self.cmd_publisher.publish(msg)
+        self.undock_goal_handle = goal_future.result()
 
-        #     msg2 = Twist()
-        #     msg2.linear.x = 0.0
-        #     msg2.angular.z = 1.571
-        #     self.cmd_publisher.publish(msg2)
+        if not self.undock_goal_handle.accepted:
+            self.error('Undock goal rejected')
+            return
+
+        self.undock_result_future = self.undock_goal_handle.get_result_async()    
 
 def main(args=None):
     rclpy.init(args=args)
