@@ -21,6 +21,9 @@ setup(
     entry_points={
         'console_scripts': [
             "oak_input = llm_input.oak_input:main",
+            "oak_input_0 = llm_input.oak_input_0:main",
+            "oak_input_1 = llm_input.oak_input_1:main",
+            "oak_input_2 = llm_input.oak_input_2:main",
             "llm_text_input_local = llm_input.llm_text_input_local:main",
         ],
     },

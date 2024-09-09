@@ -31,34 +31,28 @@ from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 
-# create an array of turtlebots
-turtlebots = ['/turtle2', '/turtle4', '/turtle6']
 
 def generate_launch_description():
     return LaunchDescription(
         [
             Node(
                 package="llm_input",
-                executable="oak_input",
-                name="oak_input",
+                executable="oak_input_0",
+                name="oak_input_0",
                 output="screen",
-                parameters=[{'turtlebot_name': 'turtle2'}]
             ),
             Node(
                 package="llm_input",
-                executable="oak_input",
-                name="oak_input",
+                executable="oak_input_1",
+                name="oak_input_1",
                 output="screen",
-                parameters=[{'turtlebot_name': 'turtle4'}]
             ),
             Node(
                 package="llm_input",
-                executable="oak_input",
-                name="oak_input",
+                executable="oak_input_2",
+                name="oak_input_2",
                 output="screen",
-                parameters=[{'turtlebot_name': 'turtle6'}]
-            )      
-               
+            )  
             # Node(
             #     package="llm_input",
             #     executable="llm_text_input_local",
