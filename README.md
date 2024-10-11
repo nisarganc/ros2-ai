@@ -1,7 +1,7 @@
 # ROS2 packages with AI Models 
 
 ## Project Requirements
-- ROS 2 Humble
+- ROS2 Humble
 
 ## Project Set-up
 - git clone https://github.com/nisarganc/ros2-ai.git
