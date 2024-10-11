@@ -4,7 +4,7 @@
   <name>input</name>
   <version>0.0.1</version>
   <description>The input package contains input nodes for the ROS2-AI</description>
-  <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadis</maintainer>
+  <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
   <license>Apache-2.0</license>
 
   <depend>llm_config</depend>

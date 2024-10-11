@@ -20,3 +20,4 @@
 
 ## Acknowledgements
 - Many thanks to the repository [ROS-LLM](https://github.com/Auromix/ROS-LLM).
+- [MR.CAP] (https://github.com/h2jaafar/mr.cap) for Multi-Robot planning and control algorithm.
