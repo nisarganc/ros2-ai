@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
@@ -8,7 +9,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             Node(
-                package="llm_input",
+                package="input",
                 executable="llm_text_input_local",
                 name="llm_text_input_local",
                 output="screen",

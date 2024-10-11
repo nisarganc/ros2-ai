@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>llm_bringup</name>
+  <name>turtles_bringup</name>
   <version>0.0.1</version>
-  <description>ROS-LLM bringup Package</description>
+  <description>ROS2-AI bringup Package</description>
   <maintainer email="hermanye233@icloud.com">Herman Ye</maintainer>
   <license>Apache-2.0</license>
   
