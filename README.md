@@ -1,6 +1,7 @@
 # ROS2 packages with AI Models 
 
 ## Project Set-up
+- git clone https://github.com/nisarganc/ros2-ai.git
 - cd ros2-ai
 - colcon build --symlink-install
 
