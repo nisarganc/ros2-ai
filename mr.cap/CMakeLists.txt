@@ -16,4 +16,4 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_subdirectory(lib/imgui)
 add_subdirectory(lib/implot)
 
-# add_subdirectory(src)
+add_subdirectory(src)

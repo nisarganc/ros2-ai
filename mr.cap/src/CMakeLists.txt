@@ -81,7 +81,7 @@ if(GTSAM_FOUND)
   add_library(mrcap_lib STATIC ${SRC_HEADER_LIST})
   target_include_directories(mrcap_lib PUBLIC ../include)
   target_link_libraries(mrcap_lib PUBLIC imgui implot gtsam ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES} ${gazebo_msgs_LIBRARIES} ${nav_msgs_LIBRARIES})
-  add_executable(mr_cap_demo src/main.cpp)
+  add_executable(mr_cap_demo main.cpp)
   target_link_libraries(mr_cap_demo PRIVATE mrcap_lib)
   
 else()
