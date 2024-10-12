@@ -3,7 +3,7 @@
 
 using namespace std;
 using namespace gtsam;
-// using namespace boost;
+using namespace boost;
 
 #include <gtsam/base/numericalDerivative.h>
 #include <gtsam/nonlinear/NonlinearEquality.h>
@@ -11,6 +11,11 @@ using namespace gtsam;
 #include "MotionModelArc.h"
 #include "Geometry.h"
 #include "DataTypes/Atan2LUT.h"
+
+#include <boost/optional.hpp>
+#include <boost/make_shared.hpp>
+
+
 extern Atan2LUT lut;
 
 class TernaryFactorStateEstimation : public gtsam::NoiseModelFactor3<gtsam::Pose2, gtsam::Pose2, gtsam::Pose2> {
