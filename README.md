@@ -6,7 +6,7 @@
 
 - **GLEW and GLFW Dependencies:**
 
-  Install necessary packages, clone and build GLFW::
+  Install necessary packages, clone and build GLFW:
 
   ```bash
   sudo apt-get install libglew-dev
@@ -22,7 +22,7 @@
 
 - **GTSAM Repository:**
 
-  Clone, checkout specific commit, build, install and update `LD_LIBRARY_PATH`:
+  Clone, checkout specific commit, build, install, and update `LD_LIBRARY_PATH`:
 
   ```bash
   git clone https://github.com/borglab/gtsam.git
