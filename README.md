@@ -2,23 +2,16 @@
 
 ## Project Requirements
 
-## Project Requirements
-
 - **ROS2 Humble**
 
 - **GLEW and GLFW Dependencies:**
 
-  Install necessary packages:
+  Install necessary packages, clone and build GLFW::
 
   ```bash
   sudo apt-get install libglew-dev
   sudo apt-get install libglfw3-dev
   sudo apt install libxinerama-dev libxcursor-dev xinput libxi-dev
-  ```
-
-  Clone and build GLFW:
-
-  ```bash
   git clone https://github.com/glfw/glfw
   cd glfw
   cmake -G "Unix Makefiles"
@@ -29,30 +22,19 @@
 
 - **GTSAM Repository:**
 
-  Clone and checkout specific commit:
+  Clone, checkout specific commit, build, install and update `LD_LIBRARY_PATH`:
 
   ```bash
   git clone https://github.com/borglab/gtsam.git
   cd gtsam
   git checkout 618ac28f2cc407e27e9eaf4e36ece64bc236b8e7
-  ```
-
-  Build and install:
-
-  ```bash
   mkdir build && cd build
   cmake -DGTSAM_ALLOW_DEPRECATED_SINCE_V42=OFF .. # Disable deprecated functionality for compatibility
   sudo make install
-  ```
-
-  Update `LD_LIBRARY_PATH`:
-
-  ```bash
   echo 'export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}' >> ~/.bashrc
   echo 'export LD_LIBRARY_PATH=/usr/local/share:${LD_LIBRARY_PATH}' >> ~/.bashrc
   source ~/.bashrc
   ```
-```  
 
 ## Project Set-up
 - git clone https://github.com/nisarganc/ros2-ai.git
