@@ -22,6 +22,3 @@ struct SDF_s {
     double sys_radius_safety_radius_squared; // system radius - safety radius squared
     double inv_sys_radius_safety_radius;
 };
-
-
-

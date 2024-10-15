@@ -9,16 +9,22 @@ def generate_launch_description():
     return LaunchDescription(
         [
             Node(
-                package="input",
-                executable="llm_text_input_local",
-                name="llm_text_input_local",
-                output="screen",
-            ),
-            Node(
-                package="llm_model",
-                executable="gpt",
-                name="gpt",
+                package="mrcap",
+                executable="mrcap_node",
+                name="mrcap",
                 output="screen",
             )
+            # Node(
+            #     package="input",
+            #     executable="llm_text_input_local",
+            #     name="llm_text_input_local",
+            #     output="screen",
+            # ),
+            # Node(
+            #     package="llm_model",
+            #     executable="gpt",
+            #     name="gpt",
+            #     output="screen",
+            # )
         ]
     )

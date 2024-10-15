@@ -3,7 +3,7 @@
 
 using namespace std;
 using namespace gtsam;
-using namespace boost;
+// using namespace boost;
 
 #include <gtsam/base/numericalDerivative.h>
 #include <gtsam/nonlinear/NonlinearEquality.h>
@@ -12,8 +12,8 @@ using namespace boost;
 #include "Geometry.h"
 #include "DataTypes/Atan2LUT.h"
 
-#include <boost/optional.hpp>
-#include <boost/make_shared.hpp>
+// #include <boost/optional.hpp>
+// #include <boost/make_shared.hpp>
 
 
 extern Atan2LUT lut;
