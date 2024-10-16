@@ -11,7 +11,7 @@ def generate_launch_description():
             Node(
                 package="mrcap",
                 executable="mrcap_node",
-                name="mrcap",
+                name="mrcap_node",
                 output="screen",
             )
             # Node(
