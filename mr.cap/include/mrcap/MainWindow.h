@@ -170,6 +170,7 @@ public:
         }
     }
 
+    //////////////////////////////////// RUNGUI ////////////////////////////////////
     void runGui() {
         // Setup window
         glfwSetErrorCallback(glfw_error_callback);
@@ -349,6 +350,7 @@ public:
             }
             static ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
             
+            //////////////////////////////////// Main Window ////////////////////////////////////
             if (show_mrcap_main_window) {
                 ImGui::Begin("mrcap", &show_mrcap_main_window, flags);
 

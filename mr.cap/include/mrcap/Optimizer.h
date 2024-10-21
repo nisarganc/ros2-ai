@@ -58,8 +58,7 @@ int robot_failed;
 
 void robotController(
     const RobotData &robot,
-    std::shared_ptr<GazeboSubscriber> subscriber,
-    // std::shared_ptr<ViconSubscriber> subscriber,
+    std::shared_ptr<ViconSubscriber> subscriber,
 
     std::shared_ptr<VelocityPublisher> publisher,
     double proportional_gain,
@@ -173,19 +172,17 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
         std::this_thread::sleep_for(std::chrono::milliseconds(4000));
     }
     std::vector<std::shared_ptr<VelocityPublisher>> publishers;
-    std::vector<std::shared_ptr<GazeboSubscriber>> subscribers;
+    
     auto ref_traj_publisher_node = std::make_shared<RefTrajectoryPublisher>(centroid, use_gazebo);
-    // std::vector<std::shared_ptr<ViconSubscriber>> subscribers;
+    std::vector<std::shared_ptr<ViconSubscriber>> subscribers;
 
-    auto rc_subscriber_node = std::make_shared<GazeboSubscriber>("C");
-    // auto rc_subscriber_node = std::make_shared<ViconSubscriber>("C");
+    auto rc_subscriber_node = std::make_shared<ViconSubscriber>("C");
     int i = 0;
     for (auto &&robot : robots) {
         robot.robot_id = i + 1;
         int robot_id_sub = robot.robot_id;
         // std::cout << "robot " << robot_id_sub << std::endl;
-        auto subscriber_node = std::make_shared<GazeboSubscriber>("0" + std::to_string(robot_id_sub));
-        // auto subscriber_node = std::make_shared<ViconSubscriber>("0" + std::to_string(robot_id_sub));
+        auto subscriber_node = std::make_shared<ViconSubscriber>("0" + std::to_string(robot_id_sub));
         subscribers.push_back(subscriber_node);
         i = i + 1;
     }

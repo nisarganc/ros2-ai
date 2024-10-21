@@ -27,6 +27,7 @@ std::vector<ROSPose> robot_poses(4);
 ROSPose centroid_pose;
 
 
+////////////////////////////////////////////// ROS2 Trajectory Publisher //////////////////////////////////////////////////
 class RefTrajectoryPublisher : public rclcpp::Node {
   public:
   RefTrajectoryPublisher(const CentroidData& centroid, const bool is_simulation)
@@ -65,95 +66,8 @@ class RefTrajectoryPublisher : public rclcpp::Node {
   nav_msgs::msg::Path ref_trajectory_msg_;
 };
 
-class GazeboSubscriber : public rclcpp::Node {
-public:
-  GazeboSubscriber(const std::string& robot_id)
-    : Node("gazebo_subs_" + robot_id), robot_id_(robot_id)
-  {
-    subscription_ = this->create_subscription<gazebo_msgs::msg::ModelStates>(
-      "gazebo/model_states", 5, std::bind(&GazeboSubscriber::topicCallback, this, std::placeholders::_1));
-          real_trajectory_msg_.header.frame_id = "map"; // Change to your frame ID if needed
-    // ref_trajectory_msg_.header.frame_id = "vicon/world"; // Change to your frame ID if needed
-    real_trajectory_pub_ = this->create_publisher<nav_msgs::msg::Path>("real_traj", 10);
-    
-  }
 
-private:
-  void topicCallback(gazebo_msgs::msg::ModelStates::SharedPtr msg)
-  {
-    int gazebo_index;
-    int robot_id;
-    double r_1 = 1.41421356237;
-    double theta_1 = M_PI/4;
-    if(robot_id_ == "C")
-    {
-      // centroid in gazebo will just be the midpoint between all the robots, and yaw will be the yaw of the first robot
-      tf2::Quaternion q1(
-      msg->pose[1].orientation.x,
-      msg->pose[1].orientation.y,
-      msg->pose[1].orientation.z,
-      msg->pose[1].orientation.w);
-      tf2::Matrix3x3 m1(q1);
-      double roll1, pitch1, yaw_r1;
-      m1.getRPY(roll1, pitch1, yaw_r1);
-      gtsam::Pose2 robot_1_pose_gtsam(msg->pose[1].position.x, msg->pose[1].position.y, yaw_r1);
-      tf2::Quaternion q2(
-      msg->pose[2].orientation.x,
-      msg->pose[2].orientation.y,
-      msg->pose[2].orientation.z,
-      msg->pose[2].orientation.w);
-      tf2::Matrix3x3 m2(q2);
-      double roll2, pitch2, yaw_r2;
-      m2.getRPY(roll2, pitch2, yaw_r2);
-      gtsam::Pose2 robot_2_pose_gtsam(msg->pose[2].position.x, msg->pose[2].position.y, yaw_r2);
-      gtsam::Pose2 centroid_pose_gtsam = Geometry::solveForCentroidPose(robot_1_pose_gtsam, robot_2_pose_gtsam, r_1, theta_1);
-      centroid_pose.x = centroid_pose_gtsam.x();
-      centroid_pose.y = centroid_pose_gtsam.y();
-      centroid_pose.yaw = centroid_pose_gtsam.theta();
-
-      // RCLCPP_INFO(this->get_logger(), "Subscribed: (x, y, yaw): (%f, %f, %f)", centroid_pose.x, centroid_pose.y, centroid_pose.yaw);
-    }
-    else{
-    robot_id = std::stoi(robot_id_);
-    robot_poses[robot_id-1].x = msg->pose[robot_id].position.x;
-    robot_poses[robot_id-1].y = msg->pose[robot_id].position.y;
-    double tz = msg->pose[robot_id].position.z;
-    tf2::Quaternion q(
-    msg->pose[robot_id].orientation.x,
-    msg->pose[robot_id].orientation.y,
-    msg->pose[robot_id].orientation.z,
-    msg->pose[robot_id].orientation.w);
-    tf2::Matrix3x3 m(q);
-    double roll, pitch;
-    m.getRPY(roll, pitch, robot_poses[robot_id-1].yaw);
-    // RCLCPP_INFO(this->get_logger(), "Subscribed: (x, y, yaw): (%f, %f, %f)", robot_poses[robot_id-1].x, robot_poses[robot_id-1].y, robot_poses[robot_id-1].yaw);
-    }
-
-    geometry_msgs::msg::PoseStamped pose;
-    pose.header.stamp = this->now();
-    pose.header.frame_id = "vicon/world"; // Change to your frame ID if needed
-
-    if(robot_id_ == "C")
-    {
-    pose.pose.position.x = centroid_pose.x;
-    pose.pose.position.y = centroid_pose.y;
-    pose.pose.position.z = 0;
-    tf2::Quaternion quaternion;
-    quaternion.setRPY(0.0, 0.0, centroid_pose.yaw);
-    pose.pose.orientation.x = quaternion.x();
-    pose.pose.orientation.y = quaternion.y();
-    pose.pose.orientation.z = quaternion.z();
-    pose.pose.orientation.w = quaternion.w();
-    real_trajectory_msg_.poses.push_back(pose);
-    real_trajectory_pub_->publish(real_trajectory_msg_);
-    }
-  }
-  std::string robot_id_;
-  rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription_;
-  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr real_trajectory_pub_;
-  nav_msgs::msg::Path real_trajectory_msg_;
-};
-
+////////////////////////////////////////////// ROS2 Vicon robo position Subscriber //////////////////////////////////////////////////
 class ViconSubscriber : public rclcpp::Node {
 public:
   ViconSubscriber(const std::string& robot_id)
@@ -225,8 +139,8 @@ private:
 };
 
 
+////////////////////////////////////////////// ROS2 Velocity Publisher //////////////////////////////////////////////////
 using namespace std::chrono_literals;
-
 class VelocityPublisher : public rclcpp::Node {
 public:
   VelocityPublisher(const std::string& robot_id)
