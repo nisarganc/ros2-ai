@@ -3,7 +3,7 @@
 <package format="3">
   <name>input</name>
   <version>0.0.1</version>
-  <description>The input package contains input nodes for the ROS2-AI</description>
+  <description>The input package contains input nodes for the ros2-ai</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
   <license>Apache-2.0</license>
 

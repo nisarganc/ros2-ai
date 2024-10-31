@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='Nisarga',
     maintainer_email='nisarga.nilavadi@utn.de',
-    description='The input package contains input nodes for the ROS2-AI.',
+    description='The input package contains input nodes for the ros2-ai.',
     license="Apache-2.0",
     tests_require=['pytest'],
     entry_points={

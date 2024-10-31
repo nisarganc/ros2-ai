@@ -24,8 +24,8 @@ setup(
     zip_safe=True,
     maintainer='Nisarga',
     maintainer_email='nisarga.nilavadi@utn.de',
-    description='ROS2-AI bringup package for turtles',
-    license='Apache-2.0',
+    description='ros2-ai bringup package for turtles',
+    license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
