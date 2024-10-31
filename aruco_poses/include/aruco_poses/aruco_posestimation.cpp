@@ -5,7 +5,7 @@
 
 int main(){
 
-    cv::VideoCapture inputVideo(0);
+    cv::VideoCapture inputVideo(6);
     cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_50);
 
     int image_width = 1920;
