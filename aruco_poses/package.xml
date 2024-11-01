@@ -3,22 +3,18 @@
 <package format="3">
   <name>aruco_poses</name>
   <version>0.0.0</version>
-  <description>TODO: Multi-Robot Object Transport</description>
+  <description>ros2-ai package for aruco marker pose estimation</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
-  <license>TODO: License declaration</license>
+  <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
-
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>msgs_interfaces</build_depend>
-
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
+  <depend>sensor_msgs</depend>
+  <depend>msgs_interfaces</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

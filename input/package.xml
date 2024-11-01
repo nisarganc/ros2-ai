@@ -2,10 +2,10 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>input</name>
-  <version>0.0.1</version>
-  <description>The input package contains input nodes for the ros2-ai</description>
+  <version>0.0.0</version>
+  <description>sensor input nodes for the ros2-ai</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
-  <license>Apache-2.0</license>
+  <license>TODO</license>
 
   <depend>llm_config</depend>
 
