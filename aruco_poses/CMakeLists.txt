@@ -16,6 +16,8 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(msgs_interfaces REQUIRED)
 
+include_directories(include)
+
 # Define the main executable
 add_executable(aruco_detector_node src/aruco_posestimation.cpp)
 
@@ -29,10 +31,10 @@ ament_target_dependencies(aruco_detector_node
   "tf2"
   "tf2_geometry_msgs"
   "msgs_interfaces"
-  
 )
 
 ament_export_dependencies(msgs_interfaces)
+ament_export_include_directories(include)
 
 # Install targets and directories
 install(TARGETS aruco_detector_node

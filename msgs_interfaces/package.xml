@@ -7,15 +7,19 @@
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
   <license>TODO</license>
 
-
+  <!-- Dependencies. -->
   <buildtool_depend>ament_cmake</buildtool_depend>
+
   <!-- The interfaces rely on rosidl_default_generators for generating language-specific code -->
-  <!-- you need to declare a dependency on it -->
-  <!-- ROS Interfaces Settings https://docs.ros.org/en/crystal/Tutorials/Custom-ROS2-Interfaces.html -->
   <build_depend>rosidl_default_generators</build_depend>
   <build_depend>geometry_msgs</build_depend>
-  <exec_depend>rosidl_default_runtime</exec_depend>
+  <build_depend>std_msgs</build_depend>
   
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+
+  <!-- Package is part of the rosidl interface packages group -->
   <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>

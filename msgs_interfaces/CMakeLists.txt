@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 # To convert the interfaces you defined into language-specific code
 # (like C++ and Python) so that they can be used in those languages
@@ -18,7 +19,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ChatGPT.msg"
   "msg/MarkerPose.msg"
   "msg/MarkerPoseArray.msg"
-
   "srv/ChatGPT.srv"
   DEPENDENCIES geometry_msgs std_msgs 
  )
