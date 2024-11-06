@@ -48,20 +48,20 @@ static void glfw_error_callback(int error, const char *description) {
 
 class MainWindow {
 public:
-    std::vector<RobotData> robots;
-    CentroidData centroid;
+    std::vector<RobotData> robots; //struct
+    CentroidData centroid; //struct
 
     float ref_traj_start_pos[3] = {0, 0, 0};
     float ref_traj_end_pos[3] = {5, 0, 0};
     std::vector<PositionPreset> positionPresets = {
-    {"presetA", 0.0f, 0.0f, 0.0f, 7.0f, 0.0f, 0.0f},
-    {"presetB", 0.0f, 0.0f, 1.54f, 5.0f, 2.0f, 1.54f},
+    {"presetA", 0.0f, 0.0f, 0.0f, 7.0f, 0.0f, 0.0f}, // (s, g)-> move 7m in x
+    {"presetB", 0.0f, 0.0f, 1.54f, 5.0f, 2.0f, 1.54f}, // (s, g)-> move 5m in x and 2m in y in same direction
     // Add more presets as required...
     };
 
-    gtsam::Pose2 custom_reference_trajectory[21];
+    gtsam::Pose2 custom_reference_trajectory[21]; //21 2d-pose points
     int currentTrajectoryPreset = {0};
-    std::vector<TrajectoryPreset> trajectoryPresets = {
+    std::vector<TrajectoryPreset> trajectoryPresets = { //21 gt2d-pose points
         {"Rectanglar",
         gtsam::Pose2(0.0, 0.0, 0.0), gtsam::Pose2(0.4, 0.0, 0.0), gtsam::Pose2(0.8, 0.0, 0.0), gtsam::Pose2(0.8, 0.5, 0.0), gtsam::Pose2(0.8, 1.0, 0.0), gtsam::Pose2(1.2, 1.0, 0.0), gtsam::Pose2(1.6, 1.0, 0.0), 
         gtsam::Pose2(1.6, 0.5, 0.0), gtsam::Pose2(1.6, 0.0, 0.0), gtsam::Pose2(2.0, 0.0, 0.0), gtsam::Pose2(2.4, 0.0, 0.0), gtsam::Pose2(2.4, 0.5, 0.0), gtsam::Pose2(2.4, 1.0, 0.0), gtsam::Pose2(2.8, 1.0, 0.0), 
@@ -432,7 +432,7 @@ public:
 
                 if (ImGui::Button("Run Factorgraph") || ImGui::IsKeyPressed(ImGuiKey_R)) {
                     Utils::Disturbance disturbance = {disturbance_pose, disturbance_axis, disturbance_value};
-
+                    // MAIN LOGIC
                     ref_traj_start_pos[2] = Utils::ensure_orientation_range(ref_traj_start_pos[2]);
                     ref_traj_end_pos[2] = Utils::ensure_orientation_range(ref_traj_end_pos[2]);
                     gtsam::Pose2 ref_traj_start_pose(ref_traj_start_pos[0], ref_traj_start_pos[1], ref_traj_start_pos[2]);

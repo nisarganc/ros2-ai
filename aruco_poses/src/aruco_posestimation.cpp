@@ -17,7 +17,7 @@
 class ArucoDetectorNode : public rclcpp::Node {
     public:
         ArucoDetectorNode() : Node("aruco_detector_node") {
-            cap = std::make_shared<cv::VideoCapture>(0);
+            cap = std::make_shared<cv::VideoCapture>(4);
             if (!cap->isOpened()) {
                 RCLCPP_ERROR(this->get_logger(), "Failed to open camera");
                 return;
@@ -33,14 +33,22 @@ class ArucoDetectorNode : public rclcpp::Node {
 
             int image_width = 1920;
             int image_height = 1080;
-            float fovx = 47.5;
-            float fovy = 47.5;
-            float fx = image_width / (2.0f * std::tan(fovx * M_PI / 360.0f));
-            float cx = image_width / 2.0f;
-            float fy = image_height / (2.0f * std::tan(fovy * M_PI / 360.0f));
-            float cy = image_height / 2.0f;
-            cameraMatrix = (cv::Mat_<float>(3,3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 0.0, 1.0);
+            // float fov = 95; // 95/2
+            // float fovx = (image_width / image_height) * fov;
+            // float fovy = fov;
+            double fx = 1019.66062; //image_width / (2.0f * std::tan(fovx * M_PI / 360.0f));
+            double cx = 944.551199; //image_width / 2.0f;
+            double fy = 1021.42301; //image_height / (2.0f * std::tan(fovy * M_PI / 360.0f));
+            double cy = 460.701976; //image_height / 2.0f;
+            cameraMatrix = (cv::Mat_<double>(3,3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
             distCoeffs = cv::Mat::zeros(1, 5, CV_32F);
+            // update distCoeffs with 0.08621978  0.08457004  0.00429467 -0.10166391 -0.06502892
+            // distCoeffs.at<double>(0) = 0.08621978;
+            // distCoeffs.at<double>(1) = 0.08457004;
+            // distCoeffs.at<double>(2) = 0.00429467;
+            // distCoeffs.at<double>(3) = -0.10166391;
+            // distCoeffs.at<double>(4) = -0.06502892;
+
         }
 
     private:
@@ -64,7 +72,7 @@ class ArucoDetectorNode : public rclcpp::Node {
         std::vector<cv::Vec3d> rvecs, tvecs;
         if (!markerIds.empty()) {
             cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
-            cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.05, cameraMatrix, distCoeffs, rvecs, tvecs);
+            cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.16, cameraMatrix, distCoeffs, rvecs, tvecs);
 
             msgs_interfaces::msg::MarkerPoseArray marker_pose_array_msg;
             for (size_t i = 0; i < markerIds.size(); ++i) {
@@ -75,6 +83,8 @@ class ArucoDetectorNode : public rclcpp::Node {
                 marker_pose.pose.position.z = tvecs[i][2];
                 tf2::Quaternion q;
                 q.setRPY(rvecs[i][0], rvecs[i][1], rvecs[i][2]);
+                // log the rvec
+                RCLCPP_INFO(this->get_logger(), "rvec: %f %f %f", rvecs[i][0], rvecs[i][1], rvecs[i][2]);
                 marker_pose.pose.orientation = tf2::toMsg(q);
                 marker_pose_array_msg.poses.push_back(marker_pose);
 
