@@ -49,7 +49,8 @@ class ArucoDetectorNode : public rclcpp::Node {
             // distCoeffs.at<double>(3) = -0.10166391;
             // distCoeffs.at<double>(4) = -0.06502892;
 
-            rvec0_tvec0 = WorldFrame();
+            //rvec0_tvec0 = WorldFrame();
+
         }
 
     private:
@@ -58,13 +59,13 @@ class ArucoDetectorNode : public rclcpp::Node {
         std::shared_ptr<cv::VideoCapture> cap;
         cv::Ptr<cv::aruco::Dictionary> dictionary;
         cv::Mat cameraMatrix, distCoeffs;
-        std::pair<cv::Mat, cv::Mat> rvec0_tvec0;
+        //std::pair<cv::Mat, cv::Mat> rvec0_tvec0;
 
         std::pair<cv::Mat, cv::Mat> WorldFrame() {
             cv::Mat frame;
-            if (!cap->read(frame)) {
+            if (!cap->read(frame)) 
                 RCLCPP_WARN(this->get_logger(), "Failed to capture frame");
-            }
+            
             std::vector<int> markerIds;
             std::vector<std::vector<cv::Point2f>> markerCorners;
             std::vector<cv::Vec3d> rvecs, tvecs; 
@@ -72,7 +73,6 @@ class ArucoDetectorNode : public rclcpp::Node {
 
             cv::aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
             if (!markerIds.empty()) {
-                cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
                 cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.16, cameraMatrix, distCoeffs, rvecs, tvecs);                
 
                 for (size_t i = 0; i < markerIds.size(); ++i) {
@@ -96,6 +96,7 @@ class ArucoDetectorNode : public rclcpp::Node {
             std::vector<int> markerIds;
             std::vector<std::vector<cv::Point2f>> markerCorners;
             std::vector<cv::Vec3d> rvecs, tvecs;
+            cv::Mat rvec0, tvec0;
             cv::aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
             
             if (!markerIds.empty()) {
@@ -105,14 +106,21 @@ class ArucoDetectorNode : public rclcpp::Node {
 
                 for (int i = 0; i < markerIds.size(); ++i) {
                     if (markerIds[i] == 0) {
+                            rvec0 = cv::Mat(rvecs[i]);
+                            tvec0 = cv::Mat(tvecs[i]);
+                    }
+                }
+
+                for (int i = 0; i < markerIds.size(); ++i) {
+                    if (markerIds[i] == 0) {
                         continue;
                     }
                     cv::Mat rvec = cv::Mat(rvecs[i]);
                     cv::Mat tvec = cv::Mat(tvecs[i]);
 
                     // Compute rotation matrix
-                    cv::Mat R0, Ri, R_rel, t_rel;
-                    cv::Rodrigues(rvec0_tvec0.first, R0);
+                    cv::Mat R0, Ri;
+                    cv::Rodrigues(rvec0, R0);
                     cv::Rodrigues(rvec, Ri);
 
                     // create 4*4 transformation matrix
@@ -122,23 +130,29 @@ class ArucoDetectorNode : public rclcpp::Node {
 
                     // Fill in rotation and translation for m0Xc and m1Xc
                     R0.copyTo(T0.rowRange(0, 3).colRange(0, 3));
-                    rvec0_tvec0.second.copyTo(T0.rowRange(0, 3).col(3));
+                    tvec0.copyTo(T0.rowRange(0, 3).col(3));
+                    T0.at<double>(3, 0) = 0;
+                    T0.at<double>(3, 1) = 0;
+                    T0.at<double>(3, 2) = 0;
                     Ri.copyTo(Ti.rowRange(0, 3).colRange(0, 3));
                     tvec.copyTo(Ti.rowRange(0, 3).col(3));
+                    Ti.at<double>(3, 0) = 0;
+                    Ti.at<double>(3, 1) = 0;
+                    Ti.at<double>(3, 2) = 0;
 
                     // Compute relative transformation
-                    T_rel = T0.inv() * Ti;
+                    T_rel = T0.inv() * Ti;                
 
                     cv::Mat rvec_rel, tvec_rel;
                     cv::Rodrigues(T_rel.rowRange(0, 3).colRange(0, 3), rvec_rel);
                     tvec_rel = T_rel.rowRange(0, 3).col(3);
                     msgs_interfaces::msg::MarkerPose marker_pose;
                     marker_pose.id = markerIds[i];
-                    marker_pose.pose.position.x = t_rel.at<double>(0);
-                    marker_pose.pose.position.y = t_rel.at<double>(1);
-                    marker_pose.pose.position.z = t_rel.at<double>(2);
+                    marker_pose.pose.position.x = tvec_rel.at<double>(0);
+                    marker_pose.pose.position.y = tvec_rel.at<double>(1);
+                    marker_pose.pose.position.z = tvec_rel.at<double>(2);
 
-                    RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", t_rel.at<double>(0), t_rel.at<double>(1), t_rel.at<double>(2));
+                    RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", tvec_rel.at<double>(0), tvec_rel.at<double>(1), tvec_rel.at<double>(2));
                     RCLCPP_INFO(this->get_logger(), "rvec_rel: %f %f %f", rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
 
                     tf2::Quaternion q;
@@ -154,8 +168,8 @@ class ArucoDetectorNode : public rclcpp::Node {
             }
 
             cv::imshow("Aruco Markers", frame);
-            cv::waitKey(1);
-            }
+            cv::waitKey(2);
+        }
 };
 
 int main(int argc, char *argv[]) {
