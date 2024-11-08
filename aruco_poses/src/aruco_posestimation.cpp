@@ -108,6 +108,7 @@ class ArucoDetectorNode : public rclcpp::Node {
                     if (markerIds[i] == 0) {
                             rvec0 = cv::Mat(rvecs[i]);
                             tvec0 = cv::Mat(tvecs[i]);
+                             cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
                     }
                 }
 
