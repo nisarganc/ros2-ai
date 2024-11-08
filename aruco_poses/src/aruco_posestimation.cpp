@@ -64,7 +64,6 @@ class ArucoDetectorNode : public rclcpp::Node {
             cv::Mat frame;
             if (!cap->read(frame)) {
                 RCLCPP_WARN(this->get_logger(), "Failed to capture frame");
-                return;
             }
             std::vector<int> markerIds;
             std::vector<std::vector<cv::Point2f>> markerCorners;
@@ -83,8 +82,8 @@ class ArucoDetectorNode : public rclcpp::Node {
                         return std::make_pair(rvec0, tvec0);
                     }
                 }
-                return std::make_pair(cv::Mat(), cv::Mat());
             }
+            return std::make_pair(cv::Mat(), cv::Mat());
         }
 
         void PosesCallback() {
@@ -105,9 +104,9 @@ class ArucoDetectorNode : public rclcpp::Node {
                 msgs_interfaces::msg::MarkerPoseArray marker_pose_array_msg;
 
                 for (int i = 0; i < markerIds.size(); ++i) {
-                    // if (markerIds[i] == 0) {
-                    //     continue;
-                    // }
+                    if (markerIds[i] == 0) {
+                        continue;
+                    }
                     cv::Mat rvec = cv::Mat(rvecs[i]);
                     cv::Mat tvec = cv::Mat(tvecs[i]);
 
