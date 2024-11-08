@@ -17,6 +17,7 @@
 class ArucoDetectorNode : public rclcpp::Node {
     public:
         ArucoDetectorNode() : Node("aruco_detector_node") {
+
             cap = std::make_shared<cv::VideoCapture>(4);
             if (!cap->isOpened()) {
                 RCLCPP_ERROR(this->get_logger(), "Failed to open camera");
@@ -33,7 +34,7 @@ class ArucoDetectorNode : public rclcpp::Node {
 
             int image_width = 1920;
             int image_height = 1080;
-            // float fov = 95; // 95/2
+            // float fov = 95/2;
             // float fovx = (image_width / image_height) * fov;
             // float fovy = fov;
             double fx = 1019.66062; //image_width / (2.0f * std::tan(fovx * M_PI / 360.0f));
@@ -42,13 +43,13 @@ class ArucoDetectorNode : public rclcpp::Node {
             double cy = 460.701976; //image_height / 2.0f;
             cameraMatrix = (cv::Mat_<double>(3,3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
             distCoeffs = cv::Mat::zeros(1, 5, CV_32F);
-            // update distCoeffs with 0.08621978  0.08457004  0.00429467 -0.10166391 -0.06502892
             // distCoeffs.at<double>(0) = 0.08621978;
             // distCoeffs.at<double>(1) = 0.08457004;
             // distCoeffs.at<double>(2) = 0.00429467;
             // distCoeffs.at<double>(3) = -0.10166391;
             // distCoeffs.at<double>(4) = -0.06502892;
 
+            rvec0_tvec0 = WorldFrame();
         }
 
     private:
@@ -57,47 +58,105 @@ class ArucoDetectorNode : public rclcpp::Node {
         std::shared_ptr<cv::VideoCapture> cap;
         cv::Ptr<cv::aruco::Dictionary> dictionary;
         cv::Mat cameraMatrix, distCoeffs;
+        std::pair<cv::Mat, cv::Mat> rvec0_tvec0;
 
-    void PosesCallback() {
-        cv::Mat frame;
-        if (!cap->read(frame)) {
-            RCLCPP_WARN(this->get_logger(), "Failed to capture frame");
-            return;
+        std::pair<cv::Mat, cv::Mat> WorldFrame() {
+            cv::Mat frame;
+            if (!cap->read(frame)) {
+                RCLCPP_WARN(this->get_logger(), "Failed to capture frame");
+                return;
+            }
+            std::vector<int> markerIds;
+            std::vector<std::vector<cv::Point2f>> markerCorners;
+            std::vector<cv::Vec3d> rvecs, tvecs; 
+            cv::Mat rvec0, tvec0;
+
+            cv::aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
+            if (!markerIds.empty()) {
+                cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
+                cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.16, cameraMatrix, distCoeffs, rvecs, tvecs);                
+
+                for (size_t i = 0; i < markerIds.size(); ++i) {
+                    if (markerIds[i] == 0) {
+                        rvec0 = cv::Mat(rvecs[i]);
+                        tvec0 = cv::Mat(tvecs[i]);
+                        return std::make_pair(rvec0, tvec0);
+                    }
+                }
+                return std::make_pair(cv::Mat(), cv::Mat());
+            }
         }
 
-        std::vector<int> markerIds;
-        std::vector<std::vector<cv::Point2f>> markerCorners;
-        cv::aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
-
-        std::vector<cv::Vec3d> rvecs, tvecs;
-        if (!markerIds.empty()) {
-            cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
-            cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.16, cameraMatrix, distCoeffs, rvecs, tvecs);
-
-            msgs_interfaces::msg::MarkerPoseArray marker_pose_array_msg;
-            for (size_t i = 0; i < markerIds.size(); ++i) {
-                msgs_interfaces::msg::MarkerPose marker_pose;
-                marker_pose.id = markerIds[i];
-                marker_pose.pose.position.x = tvecs[i][0];
-                marker_pose.pose.position.y = tvecs[i][1];
-                marker_pose.pose.position.z = tvecs[i][2];
-                tf2::Quaternion q;
-                q.setRPY(rvecs[i][0], rvecs[i][1], rvecs[i][2]);
-                // log the rvec
-                RCLCPP_INFO(this->get_logger(), "rvec: %f %f %f", rvecs[i][0], rvecs[i][1], rvecs[i][2]);
-                marker_pose.pose.orientation = tf2::toMsg(q);
-                marker_pose_array_msg.poses.push_back(marker_pose);
-
-                cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
+        void PosesCallback() {
+            cv::Mat frame;
+            if (!cap->read(frame)) {
+                RCLCPP_WARN(this->get_logger(), "Failed to capture frame");
+                return;
             }
 
-            marker_pose_publisher_->publish(marker_pose_array_msg);
-            RCLCPP_INFO(this->get_logger(), "Published %ld marker poses", markerIds.size());
-        }
+            std::vector<int> markerIds;
+            std::vector<std::vector<cv::Point2f>> markerCorners;
+            std::vector<cv::Vec3d> rvecs, tvecs;
+            cv::aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
+            
+            if (!markerIds.empty()) {
 
-        cv::imshow("Aruco Markers", frame);
-        cv::waitKey(1);
-    }
+                cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.16, cameraMatrix, distCoeffs, rvecs, tvecs);
+                msgs_interfaces::msg::MarkerPoseArray marker_pose_array_msg;
+
+                for (int i = 0; i < markerIds.size(); ++i) {
+                    // if (markerIds[i] == 0) {
+                    //     continue;
+                    // }
+                    cv::Mat rvec = cv::Mat(rvecs[i]);
+                    cv::Mat tvec = cv::Mat(tvecs[i]);
+
+                    // Compute rotation matrix
+                    cv::Mat R0, Ri, R_rel, t_rel;
+                    cv::Rodrigues(rvec0_tvec0.first, R0);
+                    cv::Rodrigues(rvec, Ri);
+
+                    // create 4*4 transformation matrix
+                    cv::Mat T0 = cv::Mat::eye(4, 4, CV_64F);
+                    cv::Mat Ti = cv::Mat::eye(4, 4, CV_64F);
+                    cv::Mat T_rel = cv::Mat::eye(4, 4, CV_64F);
+
+                    // Fill in rotation and translation for m0Xc and m1Xc
+                    R0.copyTo(T0.rowRange(0, 3).colRange(0, 3));
+                    rvec0_tvec0.second.copyTo(T0.rowRange(0, 3).col(3));
+                    Ri.copyTo(Ti.rowRange(0, 3).colRange(0, 3));
+                    tvec.copyTo(Ti.rowRange(0, 3).col(3));
+
+                    // Compute relative transformation
+                    T_rel = T0.inv() * Ti;
+
+                    cv::Mat rvec_rel, tvec_rel;
+                    cv::Rodrigues(T_rel.rowRange(0, 3).colRange(0, 3), rvec_rel);
+                    tvec_rel = T_rel.rowRange(0, 3).col(3);
+                    msgs_interfaces::msg::MarkerPose marker_pose;
+                    marker_pose.id = markerIds[i];
+                    marker_pose.pose.position.x = t_rel.at<double>(0);
+                    marker_pose.pose.position.y = t_rel.at<double>(1);
+                    marker_pose.pose.position.z = t_rel.at<double>(2);
+
+                    RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", t_rel.at<double>(0), t_rel.at<double>(1), t_rel.at<double>(2));
+                    RCLCPP_INFO(this->get_logger(), "rvec_rel: %f %f %f", rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
+
+                    tf2::Quaternion q;
+                    q.setRPY(rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
+                    marker_pose.pose.orientation = tf2::toMsg(q);
+                    marker_pose_array_msg.poses.push_back(marker_pose);
+                
+                    cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
+                    cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
+                }
+
+                marker_pose_publisher_->publish(marker_pose_array_msg);
+            }
+
+            cv::imshow("Aruco Markers", frame);
+            cv::waitKey(1);
+            }
 };
 
 int main(int argc, char *argv[]) {
