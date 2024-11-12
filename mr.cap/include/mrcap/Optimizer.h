@@ -56,10 +56,11 @@ extern ImGuiLogger logger;
 std::mutex vicon_mutex;
 int robot_failed;
 
+
+// ==================================== Robot Controller =====================================
 void robotController(
     const RobotData &robot,
-    std::shared_ptr<ViconSubscriber> subscriber,
-
+    std::shared_ptr<ArucoSubscriber> subscriber,
     std::shared_ptr<VelocityPublisher> publisher,
     double proportional_gain,
     double pid_error_threshold,
@@ -174,15 +175,15 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
     std::vector<std::shared_ptr<VelocityPublisher>> publishers;
     
     auto ref_traj_publisher_node = std::make_shared<RefTrajectoryPublisher>(centroid, use_gazebo);
-    std::vector<std::shared_ptr<ViconSubscriber>> subscribers;
-
-    auto rc_subscriber_node = std::make_shared<ViconSubscriber>("C");
+    std::vector<std::shared_ptr<ArucoSubscriber>> subscribers;
+    
+    auto rc_subscriber_node = std::make_shared<ArucoSubscriber>("40");
     int i = 0;
     for (auto &&robot : robots) {
         robot.robot_id = i + 1;
         int robot_id_sub = robot.robot_id;
         // std::cout << "robot " << robot_id_sub << std::endl;
-        auto subscriber_node = std::make_shared<ViconSubscriber>("0" + std::to_string(robot_id_sub));
+        auto subscriber_node = std::make_shared<ArucoSubscriber>("0" + std::to_string(robot_id_sub));
         subscribers.push_back(subscriber_node);
         i = i + 1;
     }
@@ -209,8 +210,8 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
         for (auto &&subscriber : subscribers) {
             rclcpp::spin_some(subscriber);
             rclcpp::spin_some(subscriber);
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                }
         rclcpp::spin_some(rc_subscriber_node);
         rclcpp::spin_some(rc_subscriber_node);
 

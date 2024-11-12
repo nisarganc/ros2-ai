@@ -39,6 +39,7 @@ struct Optimization_parameter {
     bool print_modelled_traj;
     bool print_velocities; 
     bool gazebo;
+    
     // reference trajectory parameters
     int reference_trajectory_type;
     gtsam::Pose2 ref_traj_start_pose;

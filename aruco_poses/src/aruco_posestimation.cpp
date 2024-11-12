@@ -14,9 +14,16 @@
 #include <msgs_interfaces/msg/marker_pose.hpp>
 #include <msgs_interfaces/msg/marker_pose_array.hpp>
 
+std::map<int, int> RobotMap;
+
 class ArucoDetectorNode : public rclcpp::Node {
     public:
         ArucoDetectorNode() : Node("aruco_detector_node") {
+
+            RobotMap[10] = 1;
+            RobotMap[20] = 2;
+            RobotMap[30] = 3;
+            RobotMap[40] = 40;
 
             cap = std::make_shared<cv::VideoCapture>(4);
             if (!cap->isOpened()) {
@@ -148,13 +155,13 @@ class ArucoDetectorNode : public rclcpp::Node {
                     cv::Rodrigues(T_rel.rowRange(0, 3).colRange(0, 3), rvec_rel);
                     tvec_rel = T_rel.rowRange(0, 3).col(3);
                     msgs_interfaces::msg::MarkerPose marker_pose;
-                    marker_pose.id = markerIds[i];
+                    marker_pose.id = RobotMap[markerIds[i]];
                     marker_pose.pose.position.x = tvec_rel.at<double>(0);
                     marker_pose.pose.position.y = tvec_rel.at<double>(1);
                     marker_pose.pose.position.z = tvec_rel.at<double>(2);
 
-                    RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", tvec_rel.at<double>(0), tvec_rel.at<double>(1), tvec_rel.at<double>(2));
-                    RCLCPP_INFO(this->get_logger(), "rvec_rel: %f %f %f", rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
+                    // RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", tvec_rel.at<double>(0), tvec_rel.at<double>(1), tvec_rel.at<double>(2));
+                    // RCLCPP_INFO(this->get_logger(), "rvec_rel: %f %f %f", rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
 
                     tf2::Quaternion q;
                     q.setRPY(rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));

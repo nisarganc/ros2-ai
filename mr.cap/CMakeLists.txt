@@ -11,7 +11,7 @@ find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(tf2 REQUIRED)
-
+find_package(msgs_interfaces REQUIRED)
 
 # General settings
 set(CMAKE_CXX_STANDARD 17)
@@ -38,6 +38,7 @@ ament_target_dependencies(mrcap_node
   "visualization_msgs"
   "GTSAM"
   "tf2"
+  "msgs_interfaces"
 )
 
 # Link to the third-party libraries with plain style

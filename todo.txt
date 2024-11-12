@@ -1,2 +1,5 @@
 Fix the webcam name instead of number
-Handle exception case where
+Handle exception case where 0 marker is not detected
+    - detect and estimate only once?
+    - just publish x, y, yaw
+Decide the poses pulishing rate

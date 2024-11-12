@@ -87,8 +87,7 @@ public:
     double theta_4 = {7 * M_PI_4};
 
 
-
-    int nr_of_obstacles = {2};
+    int nr_of_obstacles = {1};
 
     // obstacle avoidance
     int currentCovPreset = 0;
@@ -103,7 +102,7 @@ public:
     double covariance_X[3] = {covariancePresets[0].covX[0], covariancePresets[0].covX[1], covariancePresets[0].covX[2]};
     double covariance_ternary[3] = {covariancePresets[0].covTernary[0], covariancePresets[0].covTernary[1], covariancePresets[0].covTernary[2]};
     double covariance_obs[3] = {covariancePresets[0].covObs[0], covariancePresets[0].covObs[1], covariancePresets[0].covObs[2]};
-    double covariance_priors[3] =  {covariancePresets[0].covPriors[0], covariancePresets[0].covPriors[1], covariancePresets[0].covPriors[2]};
+    double covariance_priors[3] = {covariancePresets[0].covPriors[0], covariancePresets[0].covPriors[1], covariancePresets[0].covPriors[2]};
     double covariance_U[2] = {covariancePresets[0].covU[0], covariancePresets[0].covU[1]};
     Optimization_parameter optimization_parameter;
     Geometry_information geometry_information;
@@ -119,8 +118,8 @@ public:
     MainWindow() {
 
         sdf_s.obstacles.reserve(nr_of_obstacles);
-        sdf_s.obstacles.push_back(obstacle(2, -0.4, 0));
-        sdf_s.obstacles.push_back(obstacle(4, 0.4, 0));
+        sdf_s.obstacles.push_back(obstacle(1.5, -1.78, 0));
+        //sdf_s.obstacles.push_back(obstacle(4, 0.4, 0));
         sdf_s.system_radius = 0.5;
         sdf_s.inv_system_radius = 1.0 / sdf_s.system_radius;
         sdf_s.system_radius_squared = sdf_s.system_radius * sdf_s.system_radius;
@@ -134,7 +133,7 @@ public:
         optimization_parameter.lambdaLowerBound = 0.0;
         optimization_parameter.useFixedLambdaFactor = true;
         optimization_parameter.diagonalDamping = false;
-        optimization_parameter.nr_of_robots = 4;
+        optimization_parameter.nr_of_robots = 3;
         optimization_parameter.centroid_rotation_threshold = 10 * M_PI/180;
         optimization_parameter.robot_rotation_threshold = 3 * M_PI/180;
         optimization_parameter.nr_of_steps = 20;
@@ -152,6 +151,7 @@ public:
         optimization_parameter.print_ref_traj = false;
         optimization_parameter.print_modelled_traj = false;
         optimization_parameter.print_velocities = false;
+        optimization_parameter.gazebo = false;
         optimization_parameter.error_scale_ternary = 1.0;
         optimization_parameter.adjust_centroid_orientation = 1;
         optimization_parameter.separation_of_action = 1;

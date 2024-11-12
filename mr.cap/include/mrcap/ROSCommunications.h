@@ -13,6 +13,10 @@
 #include <nav_msgs/msg/path.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include <msgs_interfaces/msg/marker_pose.hpp>
+#include <msgs_interfaces/msg/marker_pose_array.hpp>
+
+
 // ==================================== ROS2 subscriber and publisher =========================================
 
 using std::placeholders::_1;
@@ -23,7 +27,7 @@ struct ROSPose {
   double yaw;
 };
 
-std::vector<ROSPose> robot_poses(4);
+std::vector<ROSPose> robot_poses(3);
 ROSPose centroid_pose;
 
 
@@ -36,7 +40,7 @@ class RefTrajectoryPublisher : public rclcpp::Node {
     if (is_simulation) {
         ref_trajectory_msg_.header.frame_id = "map"; // Change to your frame ID if needed
     } else {
-        ref_trajectory_msg_.header.frame_id = "vicon/world"; // Change to your frame ID if needed
+        ref_trajectory_msg_.header.frame_id = "aruco/world"; // Change to your frame ID if needed
     }
   }
 
@@ -67,75 +71,74 @@ class RefTrajectoryPublisher : public rclcpp::Node {
 };
 
 
-////////////////////////////////////////////// ROS2 Vicon robo position Subscriber //////////////////////////////////////////////////
-class ViconSubscriber : public rclcpp::Node {
+////////////////////////////////////////////// ROS2 aruco robot pose subscriber //////////////////////////////////////////////////
+class ArucoSubscriber : public rclcpp::Node {
 public:
-  ViconSubscriber(const std::string& robot_id)
-    : Node("vicon_subscriber_" + robot_id),  robot_id_(robot_id)
+  ArucoSubscriber(const std::string& robot_id)
+    : Node("aruco_subscriber_" + robot_id),  robot_id_(robot_id)
   {
-    std::string topic = "vicon/B" + robot_id + "/B" + robot_id;
-    subscription_ = this->create_subscription<geometry_msgs::msg::TransformStamped>(
-      topic, 10, std::bind(&ViconSubscriber::topicCallback, this, std::placeholders::_1));
-    real_trajectory_msg_.header.frame_id = "vicon/world"; // Change to your frame ID if needed
+    std::string topic = "aruco_poses";
+    subscription_ = this->create_subscription<msgs_interfaces::msg::MarkerPoseArray>(
+      topic, 10, std::bind(&ArucoSubscriber::topicCallback, this, std::placeholders::_1));
+    real_trajectory_msg_.header.frame_id = "aruco/world"; // Change to your frame ID if needed
     real_trajectory_pub_ = this->create_publisher<nav_msgs::msg::Path>("real_traj", 10);
   }
 
 private:
-  void topicCallback(geometry_msgs::msg::TransformStamped::SharedPtr msg) {
+  void topicCallback(msgs_interfaces::msg::MarkerPoseArray::SharedPtr msg) {
     double tz;
-    int robot_id;
-    if(robot_id_ == "C")
+    int robot_id = std::stoi(robot_id_);
+    double roll, pitch;
+
+    for (int i = 0; i < msg->poses.size(); i++)
     {
-    centroid_pose.x = msg->transform.translation.x;
-    centroid_pose.y = msg->transform.translation.y;
-    tz = msg->transform.translation.z;
-    }
-    else{
-    
-    robot_id = std::stoi(robot_id_);
-    robot_poses[robot_id-1].x = msg->transform.translation.x;
-    robot_poses[robot_id-1].y = msg->transform.translation.y;
-    tz = msg->transform.translation.z;
+      tf2::Quaternion q(
+        msg->poses[i].pose.orientation.x,
+        msg->poses[i].pose.orientation.y,
+        msg->poses[i].pose.orientation.z,
+        msg->poses[i].pose.orientation.w);
+      tf2::Matrix3x3 m(q);
+      
+      if (msg->poses[i].id == robot_id && robot_id == 40)
+      {
+        centroid_pose.x = msg->poses[i].pose.position.x;
+        centroid_pose.y = msg->poses[i].pose.position.y;
+        tz = msg->poses[i].pose.position.z;
+        m.getRPY(roll, pitch, centroid_pose.yaw);
+      }
+      else{
+        robot_poses[robot_id-1].x = msg->poses[i].pose.position.x;
+        robot_poses[robot_id-1].y = msg->poses[i].pose.position.y;
+        tz = msg->poses[i].pose.position.z;
+        m.getRPY(roll, pitch, robot_poses[robot_id-1].yaw);
+      }
+
+      // Visualize the trajectory
+      geometry_msgs::msg::PoseStamped pose;
+      pose.header.stamp = this->now();
+      pose.header.frame_id = "aruco/world"; // Change to your frame ID if needed
+      if(msg->poses[i].id == robot_id && robot_id == 40)
+        {
+          pose.pose.position.x = centroid_pose.x;
+          pose.pose.position.y = centroid_pose.y;
+          pose.pose.position.z = 0;
+          tf2::Quaternion quaternion;
+          quaternion.setRPY(0.0, 0.0, centroid_pose.yaw);
+          pose.pose.orientation.x = quaternion.x();
+          pose.pose.orientation.y = quaternion.y();
+          pose.pose.orientation.z = quaternion.z();
+          pose.pose.orientation.w = quaternion.w();
+          real_trajectory_msg_.poses.push_back(pose);
+          real_trajectory_pub_->publish(real_trajectory_msg_);
+        }
+      }
     }
 
-    tf2::Quaternion q(
-      msg->transform.rotation.x,
-      msg->transform.rotation.y,
-      msg->transform.rotation.z,
-      msg->transform.rotation.w);
-    tf2::Matrix3x3 m(q);
-    double roll, pitch;
-    if (robot_id_ == "C")
-    {
-    m.getRPY(roll, pitch, centroid_pose.yaw);
-    }
-    else{
-    m.getRPY(roll, pitch, robot_poses[robot_id-1].yaw);
-    // RCLCPP_INFO(this->get_logger(), "Subscribed (x,y,yaw): (%f,%f,%f)", robot_poses[robot_id-1].x, robot_poses[robot_id-1].y, robot_poses[robot_id-1].yaw);
-    }
-    // Visualize the trajectory
-    geometry_msgs::msg::PoseStamped pose;
-    pose.header.stamp = this->now();
-    pose.header.frame_id = "vicon/world"; // Change to your frame ID if needed
-    if(robot_id_ == "C")
-    {
-    pose.pose.position.x = centroid_pose.x;
-    pose.pose.position.y = centroid_pose.y;
-    pose.pose.position.z = 0;
-    tf2::Quaternion quaternion;
-    quaternion.setRPY(0.0, 0.0, centroid_pose.yaw);
-    pose.pose.orientation.x = quaternion.x();
-    pose.pose.orientation.y = quaternion.y();
-    pose.pose.orientation.z = quaternion.z();
-    pose.pose.orientation.w = quaternion.w();
-    real_trajectory_msg_.poses.push_back(pose);
-    real_trajectory_pub_->publish(real_trajectory_msg_);
-    }
-  }
-  rclcpp::Subscription<geometry_msgs::msg::TransformStamped>::SharedPtr subscription_;
+  rclcpp::Subscription<msgs_interfaces::msg::MarkerPoseArray>::SharedPtr subscription_;
   std::string robot_id_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr real_trajectory_pub_;
   nav_msgs::msg::Path real_trajectory_msg_;
+
 };
 
 
@@ -146,7 +149,18 @@ public:
   VelocityPublisher(const std::string& robot_id)
     : Node("publisher_" + robot_id), robot_id_(robot_id)
   {
-    publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("B" + robot_id + "/cmd_vel", 10);
+    int turtle_id = std::stoi(robot_id_);
+    if (turtle_id == 1) {
+        turtle_id = 2;
+    } else if (turtle_id == 2) {
+        turtle_id = 4;
+    } else if (turtle_id == 3) {
+        turtle_id = 6;
+    } else {
+        turtle_id = 40;
+    }
+    std::string turtle_id_ = std::to_string(turtle_id);
+    publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("turtle" + turtle_id_ + "/cmd_vel", 10);
   }
 
   void publish(double cmd_vel_x, double cmd_vel_w)
