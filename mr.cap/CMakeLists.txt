@@ -12,6 +12,7 @@ find_package(visualization_msgs REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(msgs_interfaces REQUIRED)
+find_package(aruco_poses REQUIRED)
 
 # General settings
 set(CMAKE_CXX_STANDARD 17)
@@ -39,6 +40,7 @@ ament_target_dependencies(mrcap_node
   "GTSAM"
   "tf2"
   "msgs_interfaces"
+  "aruco_poses"
 )
 
 # Link to the third-party libraries with plain style

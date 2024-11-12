@@ -17,6 +17,7 @@
   <depend>msgs_interfaces</depend>
   <depend>visualization_msgs</depend>
   <depend>tf2</depend>
+  <depend>aruco_poses</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

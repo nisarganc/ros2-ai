@@ -52,7 +52,7 @@ public:
     CentroidData centroid; //struct
 
     float ref_traj_start_pos[3] = {0, 0, 0};
-    float ref_traj_end_pos[3] = {5, 0, 0};
+    float ref_traj_end_pos[3] = {5, -5, 0};
     std::vector<PositionPreset> positionPresets = {
     {"presetA", 0.0f, 0.0f, 0.0f, 7.0f, 0.0f, 0.0f}, // (s, g)-> move 7m in x
     {"presetB", 0.0f, 0.0f, 1.54f, 5.0f, 2.0f, 1.54f}, // (s, g)-> move 5m in x and 2m in y in same direction
@@ -151,7 +151,7 @@ public:
         optimization_parameter.print_ref_traj = false;
         optimization_parameter.print_modelled_traj = false;
         optimization_parameter.print_velocities = false;
-        optimization_parameter.gazebo = false;
+        // optimization_parameter.gazebo = false;
         optimization_parameter.error_scale_ternary = 1.0;
         optimization_parameter.adjust_centroid_orientation = 1;
         optimization_parameter.separation_of_action = 1;
