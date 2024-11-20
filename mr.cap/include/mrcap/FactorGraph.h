@@ -12,6 +12,7 @@ struct NoiseModels {
 };
 
 std::pair<gtsam::NonlinearFactorGraph, gtsam::Values> MultiRobotFG(
+
     int k, const Optimization_parameter& optimization_parameter, // pass by const reference
     const std::vector<RobotData>& robots_data, const CentroidData& centroid, // pass by const reference
     const NoiseModels& covariance_information, const Geometry_information& geometry_information, const SDF_s& sdf_) { // pass by const reference

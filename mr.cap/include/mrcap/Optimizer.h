@@ -57,7 +57,7 @@ std::mutex vicon_mutex;
 int robot_failed;
 
 
-// ==================================== Robot Controller =====================================
+// ==================================== RobotController Function =====================================
 void robotController(
     const RobotData &robot,
     std::shared_ptr<ArucoSubscriber> subscriber,
@@ -97,7 +97,7 @@ void robotController(
 }
 
 
-// ==================================== PointMotion =====================================
+// ==================================== PointMotion Funcyion =====================================
 std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_parameter &optimization_parameter, Geometry_information geometry_information, std::vector<gtsam::Vector3> covariance_info,
                                                             Utils::Disturbance disturbance_info, std::vector<double> solverer_params, SDF_s sdf_s) {
 
@@ -146,7 +146,7 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
     double r = geometry_information.robot_wheel_radius;
     double L = geometry_information.robot_width;
 
-    std::system("clear");
+    int dummy = std::system("clear");
     std::cout << "\n================= Start =================" << std::endl;
     if(use_custom_trajectory) {
         std::cout << "Using custom reference trajectory" << std::endl;
@@ -173,9 +173,9 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
         std::this_thread::sleep_for(std::chrono::milliseconds(4000));
     }
     std::vector<std::shared_ptr<VelocityPublisher>> publishers;
-    
-    auto ref_traj_publisher_node = std::make_shared<RefTrajectoryPublisher>(centroid, use_gazebo);
     std::vector<std::shared_ptr<ArucoSubscriber>> subscribers;
+    auto ref_traj_publisher_node = std::make_shared<RefTrajectoryPublisher>(centroid, use_gazebo);
+    
     
     auto rc_subscriber_node = std::make_shared<ArucoSubscriber>("40");
     int i = 0;

@@ -16,6 +16,8 @@
 #include <msgs_interfaces/msg/marker_pose.hpp>
 #include <msgs_interfaces/msg/marker_pose_array.hpp>
 
+#include "DataTypes/RobotData.h"
+
 
 // ==================================== ROS2 subscriber and publisher =========================================
 
@@ -37,6 +39,8 @@ class RefTrajectoryPublisher : public rclcpp::Node {
   RefTrajectoryPublisher(const CentroidData& centroid, const bool is_simulation)
     : Node("ref_trajectory_publisher"), centroid_(centroid)
   {
+    ref_trajectory_pub_ = this->create_publisher<nav_msgs::msg::Path>("ref_traj", 10);
+
     if (is_simulation) {
         ref_trajectory_msg_.header.frame_id = "map"; // Change to your frame ID if needed
     } else {
@@ -149,15 +153,15 @@ public:
   VelocityPublisher(const std::string& robot_id)
     : Node("publisher_" + robot_id), robot_id_(robot_id)
   {
-    int turtle_id = std::stoi(robot_id_);
-    if (turtle_id == 1) {
+    int turtle_id = 0;
+    if (std::stoi(robot_id_) == 1) {
         turtle_id = 2;
-    } else if (turtle_id == 2) {
+    } else if (std::stoi(robot_id_) == 2) {
         turtle_id = 4;
-    } else if (turtle_id == 3) {
+    } else if (std::stoi(robot_id_) == 3) {
         turtle_id = 6;
     } else {
-        turtle_id = 40;
+        RCLCPP_ERROR(this->get_logger(), "Invalid robot_id: %s", robot_id_.c_str());
     }
     std::string turtle_id_ = std::to_string(turtle_id);
     publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("turtle" + turtle_id_ + "/cmd_vel", 10);

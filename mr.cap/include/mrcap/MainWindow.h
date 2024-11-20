@@ -52,7 +52,7 @@ public:
     CentroidData centroid; //struct
 
     float ref_traj_start_pos[3] = {0, 0, 0};
-    float ref_traj_end_pos[3] = {5, -5, 0};
+    float ref_traj_end_pos[3] = {3, 3, 0};
     std::vector<PositionPreset> positionPresets = {
     {"presetA", 0.0f, 0.0f, 0.0f, 7.0f, 0.0f, 0.0f}, // (s, g)-> move 7m in x
     {"presetB", 0.0f, 0.0f, 1.54f, 5.0f, 2.0f, 1.54f}, // (s, g)-> move 5m in x and 2m in y in same direction
@@ -87,7 +87,7 @@ public:
     double theta_4 = {7 * M_PI_4};
 
 
-    int nr_of_obstacles = {1};
+    int nr_of_obstacles = 1;
 
     // obstacle avoidance
     int currentCovPreset = 0;
@@ -117,8 +117,9 @@ public:
     const char* label_format = "%.1f";
     MainWindow() {
 
+        // Environment Information
         sdf_s.obstacles.reserve(nr_of_obstacles);
-        sdf_s.obstacles.push_back(obstacle(1.5, -1.78, 0));
+        sdf_s.obstacles.push_back(obstacle(1.5, 1.78, 0));
         //sdf_s.obstacles.push_back(obstacle(4, 0.4, 0));
         sdf_s.system_radius = 0.5;
         sdf_s.inv_system_radius = 1.0 / sdf_s.system_radius;
@@ -127,6 +128,8 @@ public:
         sdf_s.sys_radius_safety_radius = sdf_s.system_radius + sdf_s.safety_radius;
         sdf_s.sys_radius_safety_radius_squared = sdf_s.sys_radius_safety_radius * sdf_s.sys_radius_safety_radius;
         sdf_s.inv_sys_radius_safety_radius = 1.0 / sdf_s.sys_radius_safety_radius;
+
+        
         optimization_parameter.lambdaFactor = 10;
         optimization_parameter.lambdaInitial = 1e-5;
         optimization_parameter.lambdaUpperBound = 100000;
@@ -143,7 +146,7 @@ public:
         optimization_parameter.integral_gain = 1;
         optimization_parameter.derivative_gain = 1;
         optimization_parameter.pid_error_threshold = 0.03;
-        optimization_parameter.run_ros_nodes = 0;
+        optimization_parameter.run_ros_nodes = false;
         optimization_parameter.numerical_jacobian = 0;
         optimization_parameter.print_fg_factors = false;
         optimization_parameter.print_fg_initial_values = false;
@@ -151,7 +154,7 @@ public:
         optimization_parameter.print_ref_traj = false;
         optimization_parameter.print_modelled_traj = false;
         optimization_parameter.print_velocities = false;
-        // optimization_parameter.gazebo = false;
+        optimization_parameter.gazebo = false;
         optimization_parameter.error_scale_ternary = 1.0;
         optimization_parameter.adjust_centroid_orientation = 1;
         optimization_parameter.separation_of_action = 1;
