@@ -4,5 +4,6 @@ Handle exception case where 0 marker is not detected
     - just publish x, y, yaw
 Decide the poses pulishing rate
 
-Does create3 frame and aruco frame match with each other?
-debug mrcap working
+check if robot frame and aruco frame coincide with each other?
+check if increading k results in smooth traj
+Fix that centroid dont rotate while generating control commands

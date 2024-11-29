@@ -52,7 +52,7 @@ public:
     CentroidData centroid; //struct
 
     float ref_traj_start_pos[3] = {0, 0, 0};
-    float ref_traj_end_pos[3] = {3, 3, 0};
+    float ref_traj_end_pos[3] = {5, 2, 0};
     std::vector<PositionPreset> positionPresets = {
     {"presetA", 0.0f, 0.0f, 0.0f, 7.0f, 0.0f, 0.0f}, // (s, g)-> move 7m in x
     {"presetB", 0.0f, 0.0f, 1.54f, 5.0f, 2.0f, 1.54f}, // (s, g)-> move 5m in x and 2m in y in same direction
@@ -87,7 +87,7 @@ public:
     double theta_4 = {7 * M_PI_4};
 
 
-    int nr_of_obstacles = 1;
+    int nr_of_obstacles = 2;
 
     // obstacle avoidance
     int currentCovPreset = 0;
@@ -120,7 +120,7 @@ public:
         // Environment Information
         sdf_s.obstacles.reserve(nr_of_obstacles);
         sdf_s.obstacles.push_back(obstacle(1.5, 1.78, 0));
-        //sdf_s.obstacles.push_back(obstacle(4, 0.4, 0));
+        sdf_s.obstacles.push_back(obstacle(2.2, 1, 2.7));
         sdf_s.system_radius = 0.5;
         sdf_s.inv_system_radius = 1.0 / sdf_s.system_radius;
         sdf_s.system_radius_squared = sdf_s.system_radius * sdf_s.system_radius;
@@ -435,7 +435,8 @@ public:
 
                 if (ImGui::Button("Run Factorgraph") || ImGui::IsKeyPressed(ImGuiKey_R)) {
                     Utils::Disturbance disturbance = {disturbance_pose, disturbance_axis, disturbance_value};
-                    // MAIN LOGIC
+                    
+                    /////////////////////////////// MAIN LOGIC //////////////////////////////////////////////////////////
                     ref_traj_start_pos[2] = Utils::ensure_orientation_range(ref_traj_start_pos[2]);
                     ref_traj_end_pos[2] = Utils::ensure_orientation_range(ref_traj_end_pos[2]);
                     gtsam::Pose2 ref_traj_start_pose(ref_traj_start_pos[0], ref_traj_start_pos[1], ref_traj_start_pos[2]);

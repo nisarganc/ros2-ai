@@ -57,7 +57,6 @@ std::mutex vicon_mutex;
 int robot_failed;
 
 
-// ==================================== RobotController Function =====================================
 void robotController(
     const RobotData &robot,
     std::shared_ptr<ArucoSubscriber> subscriber,
@@ -97,7 +96,7 @@ void robotController(
 }
 
 
-// ==================================== PointMotion Funcyion =====================================
+// ==================================== PointMotion Function =====================================
 std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_parameter &optimization_parameter, Geometry_information geometry_information, std::vector<gtsam::Vector3> covariance_info,
                                                             Utils::Disturbance disturbance_info, std::vector<double> solverer_params, SDF_s sdf_s) {
 
@@ -164,9 +163,7 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
     std::vector<RobotData> robots(nr_of_robots);
     CentroidData centroid;
 
-    /* -------------------------------------------------------------------------- */
-    /*                             ROS Initialization                             */
-    /* -------------------------------------------------------------------------- */
+    ///////////////////////////////////////////// ROS Initialization /////////////////////////////////////////////
     int k;
     rclcpp::init(0, nullptr);
     if (ROS_Enabled == true) {
@@ -235,6 +232,9 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
         centroid.X_k_real.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
         centroid.X_k_modelled.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
     }
+
+    /////////////////////////////////////////////// Centroid Trajectory /////////////////////////////////////////////// 
+
     gtsam::Pose2 ref_traj_start_pose;
     if (ROS_Enabled) {
         ref_traj_start_pose = gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw);
@@ -285,7 +285,6 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
     for (int k = 0; k <= max_states; k++) {
         gtsam::Pose2 pose_ref;
         if (use_custom_trajectory) {
-            // pose_ref = custom_reference_trajectory[k];
             pose_ref = custom_reference_trajectory_vec[k];
         } else {
             pose_ref = X_ref.get_ref_pose(k);
@@ -298,7 +297,8 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
         Utils::printPoseVector(centroid.X_k_ref);
     }
 
-    for (int k = 0; k < max_states; k++) {
+    // Centroid control 
+    for (int k = 0; k < max_states; k++) { // centroid rotation is ignored
         gtsam::Pose2 ref_control_input = MotionModelArc::centroid_solveForControl(centroid.X_k_ref[k], centroid.X_k_ref[k + 1], optimization_parameter, geometry_information);
         centroid.U_k_ref.push_back(ref_control_input);
     }
@@ -354,6 +354,8 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
     std::cout << "Solver Parameters" << std::endl;
     std::cout << "=========================================" << std::endl;
 
+
+    ///////////////////////////////////////////// Optimization Loop /////////////////////////////////////////////
     benchmark.start();
     for (k = 0; k < max_states; k++) {
 
@@ -381,15 +383,39 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
 
         // Conversion and assignment
         centroid.X_k_fg = Utils::valuesToPose_mod(result, k, optimization_parameter, 0);
+        // print centroid.X_k_fg which is gtsam::pose type
+        // Printing the trajectory
+         std::cout << "Returned Trajectory:" << std::endl;
+        for (size_t i = 0; i < centroid.X_k_fg.size(); ++i) {
+            const auto& pose = centroid.X_k_fg[i];
+            std::cout << "Pose " << i + 1 << ": ";
+            std::cout << "x = " << pose.x() << ", ";
+            std::cout << "y = " << pose.y() << ", ";
+            std::cout << "theta = " << pose.theta() << std::endl;
+        }
+
         centroid.all_fg_poses.push_back(centroid.X_k_fg);
         centroid.U_k_fg = Utils::valuesToVelocity_mod(result, k, optimization_parameter, 0);
 
-        // publish updated reference trajectory
+        // print centroid.U_k_fg
+        std::cout << "Returned Velocity:" << std::endl;
+        for (size_t i = 0; i < centroid.U_k_fg.size(); ++i) {
+            const auto& velocity = centroid.U_k_fg[i];
+            std::cout << "Velocity " << i + 1 << ": ";
+            std::cout << "x = " << velocity.x() << ", ";
+            std::cout << "y = " << velocity.y() << ", ";
+            std::cout << "theta = " << velocity.theta() << std::endl;
+        }
+
+        // publish updated reference centroid trajectory
         if (ROS_Enabled) {
             ref_traj_publisher_node->publish();
         }
 
         result.clear();
+
+
+        //////////////////////////////////////// Multi-Robots Control ////////////////////////////////////////
 
         std::vector<gtsam::Pose2> X_modelled_CentroidRotation_RobotArc_vector;
         std::vector<gtsam::Pose2> X_modelled_CentroidTranslation_RobotTranslation_vector;
