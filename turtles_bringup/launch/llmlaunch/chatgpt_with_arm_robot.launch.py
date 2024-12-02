@@ -37,13 +37,17 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-
+    arx5_bringup_launch_path = PathJoinSubstitution([FindPackageShare('arx5_bringup'), 'launch', 'bringup.launch.py']) 
+    arx5_bringup_launch =IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(arx5_bringup_launch_path),)
+    
     return LaunchDescription(
         [
+            arx5_bringup_launch,
             Node(
-                package="llm_input",
-                executable="llm_audio_input_local",
-                name="llm_audio_input_local",
+                package="input",
+                executable="llm_text_input",
+                name="llm_text_input",
                 output="screen",
             ),
             Node(
@@ -53,16 +57,10 @@ def generate_launch_description():
                 output="screen",
             ),
             Node(
-                package="llm_output",
-                executable="llm_audio_output",
-                name="llm_audio_output",
-                output="screen",
-            ),
-            Node(
                 package="llm_robot",
-                executable="multi_robot",
-                name="multi_robot",
+                executable="arm_robot",
+                name="arm_robot",
                 output="screen",
-            ),
+            )
         ]
     )

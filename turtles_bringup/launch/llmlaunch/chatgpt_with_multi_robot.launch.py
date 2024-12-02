@@ -41,9 +41,9 @@ def generate_launch_description():
     return LaunchDescription(
         [
             Node(
-                package="llm_input",
-                executable="llm_audio_input_local",
-                name="llm_audio_input_local",
+                package="input",
+                executable="llm_text_local",
+                name="llm_text_local",
                 output="screen",
             ),
             Node(
@@ -53,16 +53,10 @@ def generate_launch_description():
                 output="screen",
             ),
             Node(
-                package="llm_output",
-                executable="llm_audio_output",
-                name="llm_audio_output",
-                output="screen",
-            ),
-            Node(
                 package="llm_robot",
                 executable="multi_robot",
                 name="multi_robot",
                 output="screen",
-            ),
+            )
         ]
     )
