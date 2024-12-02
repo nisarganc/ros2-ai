@@ -47,7 +47,7 @@ def generate_launch_description():
                 output="screen",
             ),
             Node(
-                package="llm_model",
+                package="vlm_model",
                 executable="chatgpt",
                 name="chatgpt",
                 output="screen",

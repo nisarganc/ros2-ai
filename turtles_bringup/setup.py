@@ -22,10 +22,10 @@ setup(
     ],
     install_requires=['setuptools', 'llm_config'],
     zip_safe=True,
-    maintainer='Nisarga',
+    maintainer='Nisarga Nilavadi',
     maintainer_email='nisarga.nilavadi@utn.de',
     description='ros2-ai bringup package for turtles',
-    license='TODO: License declaration',
+    license='TODO',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

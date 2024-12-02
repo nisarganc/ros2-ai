@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>mrcap</name>
-  <version>0.0.0</version>
+  <version>0.0.1</version>
   <description>mr.cap ros2 package for multi-robot joint control and planning</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
   <license>TODO</license>

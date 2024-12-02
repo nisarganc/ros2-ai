@@ -1,13 +1,14 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>turtles_bringup</name>
+  <name>vlm_model</name>
   <version>0.0.1</version>
-  <description>ros2-ai bringup Package</description>
+  <description>The vlm package for ros2-ai</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
   <license>TODO</license>
-  
-  <exec_depend>ros2launch</exec_depend>
+
+  <depend>llm_config</depend>
+  <depend>msgs_interfaces</depend>
 
   <export>
     <build_type>ament_python</build_type>

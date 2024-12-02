@@ -1,20 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# flake8: noqa
-#
-# Copyright 2023 Herman Ye @Auromix
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 #
 # Description:
 # This code defines a ROS node called ChatGPTNode
@@ -32,12 +16,11 @@
 # ros2 topic echo /llm_feedback_to_user
 # ros2 topic pub /llm_input_audio_to_text std_msgs/msg/String "data: 'Hello,tell me a joke'" -1
 #
-# Author: Herman Ye @Auromix
 
 # ROS related
 import rclpy
 from rclpy.node import Node
-from llm_interfaces.srv import ChatGPT
+from msgs_interfaces.srv import ChatGPT
 from std_msgs.msg import String
 
 # LLM related
