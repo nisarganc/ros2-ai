@@ -12,9 +12,6 @@ from irobot_create_msgs.action import Undock
 from geometry_msgs.msg import Twist
 from rclpy.action import ActionClient
 
-# Global Initialization
-from llm_config.user_config import UserConfig
-config = UserConfig()
 
 
 class MotionControl(Node):

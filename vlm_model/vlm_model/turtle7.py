@@ -10,7 +10,7 @@ from std_srvs.srv import Empty
 
 # LLM related
 import json
-from llm_config.user_config import UserConfig
+from user_config import UserConfig
 
 # Global Initialization
 config = UserConfig()

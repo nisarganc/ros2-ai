@@ -5,6 +5,7 @@
 import json
 import time
 import subprocess
+from user_config import UserConfig
 
 # ROS related
 import rclpy
@@ -14,8 +15,6 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 from msgs_interfaces.srv import ChatGPT
 
-# Global Initialization
-from llm_config.user_config import UserConfig
 
 config = UserConfig()
 

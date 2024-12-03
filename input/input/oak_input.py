@@ -14,9 +14,6 @@ from sensor_msgs.msg import CameraInfo
 from cv_bridge import CvBridge
 import cv2
 
-# Global Initialization
-from llm_config.user_config import UserConfig
-config = UserConfig()
 
 
 

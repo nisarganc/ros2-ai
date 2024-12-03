@@ -22,7 +22,6 @@ setup(
         'console_scripts': [
             "motion_control = input.motion_control:main",
             "oak_input = input.oak_input:main",
-            "llm_text_input = input.llm_text_input:main",
         ],
     },
 )

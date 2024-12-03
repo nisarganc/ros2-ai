@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(aruco_poses)
+project(pose_estimation)
 
 # General settings
 set(CMAKE_CXX_STANDARD 17)
@@ -19,10 +19,10 @@ find_package(msgs_interfaces REQUIRED)
 include_directories(include)
 
 # Define the main executable
-add_executable(aruco_detector_node src/aruco_posestimation.cpp)
+add_executable(aruco_pose_node src/aruco_pose_estimation.cpp)
 
 # Depend on ROS 2 and other necessary libraries
-ament_target_dependencies(aruco_detector_node
+ament_target_dependencies(aruco_pose_node
   "rclcpp"
   "sensor_msgs"
   "std_msgs"
@@ -37,7 +37,7 @@ ament_export_dependencies(msgs_interfaces)
 ament_export_include_directories(include)
 
 # Install targets and directories
-install(TARGETS aruco_detector_node
+install(TARGETS aruco_pose_node
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY include/

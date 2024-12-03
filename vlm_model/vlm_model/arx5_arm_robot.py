@@ -11,9 +11,7 @@ from std_srvs.srv import Empty
 # LLM related
 import json
 import os
-from llm_config.user_config import UserConfig
-
-# Global Initialization
+from user_config import UserConfig
 config = UserConfig()
 
 

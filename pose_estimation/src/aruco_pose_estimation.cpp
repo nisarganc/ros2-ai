@@ -16,9 +16,9 @@
 
 std::map<int, int> RobotMap;
 
-class ArucoDetectorNode : public rclcpp::Node {
+class ArucoPoseEstimation : public rclcpp::Node {
     public:
-        ArucoDetectorNode() : Node("aruco_detector_node") {
+        ArucoPoseEstimation() : Node("aruco_pose_node") {
 
             RobotMap[10] = 1;
             RobotMap[20] = 2;
@@ -35,7 +35,7 @@ class ArucoDetectorNode : public rclcpp::Node {
                 "aruco_poses", 10);
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(100), 
-                std::bind(&ArucoDetectorNode::PosesCallback, this));
+                std::bind(&ArucoPoseEstimation::PosesCallback, this));
 
             dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_50);
 
@@ -172,6 +172,8 @@ class ArucoDetectorNode : public rclcpp::Node {
                     cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
                 }
 
+                marker_pose_array_msg.image = *cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
+
                 marker_pose_publisher_->publish(marker_pose_array_msg);
             }
 
@@ -182,7 +184,7 @@ class ArucoDetectorNode : public rclcpp::Node {
 
 int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<ArucoDetectorNode>());
+    rclcpp::spin(std::make_shared<ArucoPoseEstimation>());
     rclcpp::shutdown();
     return 0;
 }
