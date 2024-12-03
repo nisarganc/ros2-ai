@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
-#
+#!~/ros2-ai/objectpushing/bin python3
+# -*- coding: utf-8 -*-
+
 # Description:
 # This code defines a ROS node called ChatGPTNode
 # The node interacts with the ChatGPT service to implement conversational interactions

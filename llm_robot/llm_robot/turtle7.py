@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!~/ros2-ai/objectpushing/bin python3
 # -*- coding: utf-8 -*-
 
 # ROS related

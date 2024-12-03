@@ -37,8 +37,10 @@
   ```
 
 ## Project Set-up
-- git clone https://github.com/nisarganc/ros2-ai.git
+- mkdir ros2-ai
 - cd ros2-ai
+- python -m venv objectpushing
+- git clone https://github.com/nisarganc/ros2-ai.git src
 - colcon build --symlink-install
 
 ## Turtles Random Walk   
