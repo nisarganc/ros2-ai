@@ -1,23 +1,6 @@
 #!~/ros2-ai/objectpushing/bin python3
 # -*- coding: utf-8 -*-
 
-# Description:
-# This code defines a ROS node called ChatGPTNode
-# The node interacts with the ChatGPT service to implement conversational interactions
-# The node implements the ChatGPT service callback function "llm_callback"
-# The node also includes a client function "function_call_client" and a publisher "output_publisher"
-# It also includes a function called "add_message_to_history" to update chat history records
-# The code generates a chat response using the OpenAI API
-# It extracts response information from the response data
-# The code writes chat history records to a JSON file using Python's JSON library
-# The code calls other functions using ROS Service
-#
-# Node test Method:
-# ros2 run llm_model chatgpt
-# ros2 topic echo /llm_feedback_to_user
-# ros2 topic pub /llm_input_audio_to_text std_msgs/msg/String "data: 'Hello,tell me a joke'" -1
-#
-
 # ROS related
 import rclpy
 from rclpy.node import Node
@@ -29,7 +12,7 @@ import json
 import os
 import time
 from openai import OpenAI
-from llm_config.user_config import UserConfig
+from user_config import UserConfig
 
 
 # Global Initialization

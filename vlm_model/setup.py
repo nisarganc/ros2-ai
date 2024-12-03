@@ -21,7 +21,8 @@ setup(
     entry_points={
         "console_scripts": [
             "chatgpt = vlm_model.chatgpt:main",
-            "gpt = vlm_model.gpt:main"
+            "gpt = vlm_model.gpt:main",
+            "multi_robot = vlm_model.multi_robot:main",
         ],
     },
 )

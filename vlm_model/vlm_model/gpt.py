@@ -4,7 +4,7 @@
 # ROS related
 import rclpy
 from rclpy.node import Node
-from llm_interfaces.srv import ChatGPT
+from msgs_interfaces.srv import ChatGPT
 from std_msgs.msg import String
 
 # LLM related
@@ -12,11 +12,11 @@ import json
 import os
 import time
 from openai import OpenAI
-from llm_config.taskplanner_config import TaskPlannerConfig
+from user_config import UserConfig
 
 
 # Global Initialization
-config = TaskPlannerConfig()
+config = UserConfig()
 client = OpenAI(
     api_key=config.openai_api_key
     
