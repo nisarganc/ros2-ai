@@ -1,12 +1,14 @@
 # ROS2 packages with AI Models 
 
 ## Project Set-up
-- mkdir ros2-ai
-- cd ros2-ai
-- python -m venv objectpushing
-- source ~/ros2-ai/objectpushing/bin/activate
-- git clone https://github.com/nisarganc/ros2-ai.git src
-- colcon build --symlink-install
+```bash
+  mkdir ros2-ai
+  cd ros2-ai
+  python -m venv objectpushing
+  source ~/ros2-ai/objectpushing/bin/activate
+  git clone https://github.com/nisarganc/ros2-ai.git src
+  colcon build --symlink-install
+```
 
 ## Project dependencies
 
