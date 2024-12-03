@@ -11,7 +11,7 @@ from std_srvs.srv import Empty
 # LLM related
 import json
 import os
-from user_config import UserConfig
+from openai_config import UserConfig
 config = UserConfig()
 
 

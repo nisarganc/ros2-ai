@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-robot_functions_list_turtlebot4 = [
+ros_topics_turtlebot4 = [
     {
         "name": "publish_cmd_vel",
         "description": "Publish cmd_vel message to control the movement of turtlebot4, including translation and rotation velocities",
@@ -15,10 +15,6 @@ robot_functions_list_turtlebot4 = [
                 "linear_y": {
                     "type": "number",
                     "description": "The linear velocity along the y-axis",
-                },
-                "linear_z": {
-                    "type": "number",
-                    "description": "The linear velocity along the z-axis",
                 },
                 "angular_x": {
                     "type": "number",

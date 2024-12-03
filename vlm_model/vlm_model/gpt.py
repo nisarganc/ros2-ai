@@ -12,7 +12,7 @@ import json
 import os
 import time
 from openai import OpenAI
-from user_config import UserConfig
+from openai_config import UserConfig
 
 
 # Global Initialization

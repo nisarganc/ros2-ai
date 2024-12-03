@@ -10,7 +10,7 @@ from std_srvs.srv import Empty
 
 # LLM related
 import json
-from user_config import UserConfig
+from openai_config import UserConfig
 
 # Global Initialization
 config = UserConfig()

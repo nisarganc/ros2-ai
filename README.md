@@ -1,6 +1,14 @@
 # ROS2 packages with AI Models 
 
-## Project Requirements
+## Project Set-up
+- mkdir ros2-ai
+- cd ros2-ai
+- python -m venv objectpushing
+- source ~/ros2-ai/objectpushing/bin/activate
+- git clone https://github.com/nisarganc/ros2-ai.git src
+- colcon build --symlink-install
+
+## Project dependencies
 
 - **ROS2 Humble**
 
@@ -35,13 +43,6 @@
   echo 'export LD_LIBRARY_PATH=/usr/local/share:${LD_LIBRARY_PATH}' >> ~/.bashrc
   source ~/.bashrc
   ```
-
-## Project Set-up
-- mkdir ros2-ai
-- cd ros2-ai
-- python -m venv objectpushing
-- git clone https://github.com/nisarganc/ros2-ai.git src
-- colcon build --symlink-install
 
 ## Turtles Random Walk   
 - ros2 launch turtles_bringup move_turtlebots.launch.py

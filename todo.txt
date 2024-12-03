@@ -7,3 +7,6 @@ Decide the poses pulishing rate
 check if robot frame and aruco frame coincide with each other?
 check if increading k results in smooth traj
 Fix that centroid dont rotate while generating control commands
+
+update requirements file for python
+update c++ packages requirements

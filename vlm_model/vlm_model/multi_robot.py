@@ -5,7 +5,7 @@
 import json
 import time
 import subprocess
-from user_config import UserConfig
+from openai_config import UserConfig
 
 # ROS related
 import rclpy
