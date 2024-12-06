@@ -1,0 +1,4 @@
+string poses_text
+sensor_msgs/Image image
+---
+string response_text

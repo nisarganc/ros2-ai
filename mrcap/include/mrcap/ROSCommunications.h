@@ -90,31 +90,20 @@ public:
 
 private:
   void topicCallback(msgs_interfaces::msg::MarkerPoseArray::SharedPtr msg) {
-    double tz;
     int robot_id = std::stoi(robot_id_);
-    double roll, pitch;
 
     for (int i = 0; i < msg->poses.size(); i++)
-    {
-      tf2::Quaternion q(
-        msg->poses[i].pose.orientation.x,
-        msg->poses[i].pose.orientation.y,
-        msg->poses[i].pose.orientation.z,
-        msg->poses[i].pose.orientation.w);
-      tf2::Matrix3x3 m(q);
-      
+    {      
       if (msg->poses[i].id == robot_id && robot_id == 40)
       {
-        centroid_pose.x = msg->poses[i].pose.position.x;
-        centroid_pose.y = msg->poses[i].pose.position.y;
-        tz = msg->poses[i].pose.position.z;
-        m.getRPY(roll, pitch, centroid_pose.yaw);
+        centroid_pose.x = msg->poses[i].x;
+        centroid_pose.y = msg->poses[i].y;
+        centroid_pose.yaw = msg->poses[i].theta;
       }
       else{
-        robot_poses[robot_id-1].x = msg->poses[i].pose.position.x;
-        robot_poses[robot_id-1].y = msg->poses[i].pose.position.y;
-        tz = msg->poses[i].pose.position.z;
-        m.getRPY(roll, pitch, robot_poses[robot_id-1].yaw);
+        robot_poses[robot_id-1].x = msg->poses[i].x;
+        robot_poses[robot_id-1].y = msg->poses[i].y;
+        robot_poses[robot_id-1].yaw = msg->poses[i].theta;
       }
 
       // Visualize the trajectory

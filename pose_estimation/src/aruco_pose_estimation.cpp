@@ -156,16 +156,13 @@ class ArucoPoseEstimation : public rclcpp::Node {
                     tvec_rel = T_rel.rowRange(0, 3).col(3);
                     msgs_interfaces::msg::MarkerPose marker_pose;
                     marker_pose.id = RobotMap[markerIds[i]];
-                    marker_pose.pose.position.x = tvec_rel.at<double>(0);
-                    marker_pose.pose.position.y = tvec_rel.at<double>(1);
-                    marker_pose.pose.position.z = tvec_rel.at<double>(2);
+                    marker_pose.x = tvec_rel.at<double>(0);
+                    marker_pose.y = tvec_rel.at<double>(1);
 
                     // RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", tvec_rel.at<double>(0), tvec_rel.at<double>(1), tvec_rel.at<double>(2));
                     // RCLCPP_INFO(this->get_logger(), "rvec_rel: %f %f %f", rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
 
-                    tf2::Quaternion q;
-                    q.setRPY(rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
-                    marker_pose.pose.orientation = tf2::toMsg(q);
+                    marker_pose.theta = rvec_rel.at<double>(2);
                     marker_pose_array_msg.poses.push_back(marker_pose);
                 
                     cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);

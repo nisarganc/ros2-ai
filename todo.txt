@@ -1,15 +1,21 @@
-CODING OPTIMISATION:
+pose_estimation:
 Fix the webcam name instead of number
 Handle exception case where 0 marker is not detected
-    - detect and estimate only once?
-    - just publish x, y, yaw
-Decide the poses pulishing rate
+    - detect and estimate marker0 only once
+    - Fix the poses pulishing rate
 
-MODEL CHANGES:
+mrcap:
+Fix fg equation: no rotation while generating centroid control commands
+create srv client:
+- msg: "The pose of turtle2 with marker-id {} is {}, turtle4 with marker-id {} is {}, and turtle6 with marker-id {} is {}. The pose of manipulating object with marker-id {} is {}. Please return control commands of all turtles such that next pose of manipulating object with marker-id {} is{}. All poses follow this syntax (x, y, yaw). Note that yaw angle of robots can be between -pi to pi according to right hand tumb rule."
+
+Response_behavior function: 
+- How to handle sync of control commands, time duration of execution and sequence of control commands. 
+
+real world robots:
 check if robot frame and aruco frame coincide with each other?
-check if increading k results in smooth traj
-Fix that centroid dont rotate while generating control commands
+check if increasing k results in smooth traj?
 
-README.md
+README.md:
 update requirements file for python
 update c++ packages requirements

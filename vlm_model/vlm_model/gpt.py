@@ -4,8 +4,7 @@
 # ROS related
 import rclpy
 from rclpy.node import Node
-from msgs_interfaces.srv import ChatGPT
-from std_msgs.msg import String
+from msgs_interfaces.srv import GPT
 
 # LLM related
 import json
@@ -14,6 +13,9 @@ import time
 from openai import OpenAI
 from openai_config import UserConfig
 
+import cv2
+from cv_bridge import CvBridge
+import base64
 
 # Global Initialization
 config = UserConfig()
@@ -26,18 +28,11 @@ class GPTNode(Node):
     def __init__(self):
         super().__init__("GPT_node")
 
-        # LLM input listener
-        self.llm_input_subscriber = self.create_subscription(
-            String, "/message_from_user", self.llm_callback, 0
+        # Server for GPT response: (Poses, Image) -> Twist
+        self.function_call_server = self.create_service(
+            GPT, "/GPT_service", self.gpt_callback
         )
-
-        # LLM feedback for user publisher
-        self.llm_feedback_publisher = self.create_publisher(
-            String, "/llm_feedback_to_user", 0
-        )
-
-        # request to be sent to GPT service
-        self.function_call_request = ChatGPT.Request()
+        self.bridge = CvBridge()
 
         self.start_timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
         self.chat_history_file = os.path.join(
@@ -51,55 +46,49 @@ class GPTNode(Node):
 
 
     ##################################### CHATGPT RESPONSE ############################################
-    def llm_callback(self, msg):
-        """
-        llm_callback is the main function of the ChatGPT node.
-        """
+    def gpt_callback(self, request, response):
 
-        user_prompt = msg.data
-        self.add_message_to_history("user", user_prompt)
-        chatgpt_response = self.generate_chatgpt_response(config.chat_history)
-        content_text, function_flag, function_call_arg, function_call_name = self.get_response_information(
-            chatgpt_response
-        )
+        self.add_message_to_history("user", content=request.poses_text, image=request.image)     
+        gpt_response = self.generate_gpt_response(config.chat_history)
+        content_text, function_flag, function_call_name, function_call_arg = self.get_response_information(gpt_response)
 
         if function_flag == 1:
-            self.function_call(function_call_arg, function_call_name)
+            response = function_call_arg
         else:
-            self.publish_string(content_text, self.llm_feedback_publisher)
-            self.add_message_to_history(
-            role="assistant", content=content_text.strip("\n").strip()
-            )
+            response = "Function call not found in GPT response"
+
+        self.add_message_to_history(
+            role="assistant_function",
+            content=function_call_arg.strip("\n").strip(),
+            name=function_call_name
+        )
         self.write_chat_history_to_json()
 
-    def generate_chatgpt_response(self, chat_history):
-        """
-        Generates a chatgpt response based on the input messages provided.
-        """
+        return response
+        
 
+    def generate_gpt_response(self, chat_history):
         response = client.chat.completions.create(
             model=config.openai_model,
             messages=chat_history,
-            temperature=config.openai_temperature,
-            top_p=config.openai_top_p,
-            n=config.openai_n,
-            stream=config.openai_stream,
-            stop=config.openai_stop,
-            max_tokens=config.openai_max_tokens,
-            presence_penalty=config.openai_presence_penalty,
-            frequency_penalty=config.openai_frequency_penalty,
+            functions=config.robot_functions_list,
+            function_call="auto",            
+            # temperature=config.openai_temperature,
+            # top_p=config.openai_top_p,
+            # n=config.openai_n,
+            # stream=config.openai_stream,
+            # stop=config.openai_stop,
+            # max_tokens=config.openai_max_tokens,
+            # presence_penalty=config.openai_presence_penalty,
+            # frequency_penalty=config.openai_frequency_penalty,
         )
         self.get_logger().info(f"OpenAI response: {response}")
         return response
 
 
-    def get_response_information(self, chatgpt_response):
-        """
-        Returns the response information from the chatgpt response.
-        The response information includes the message, text, function call, and function flag.
-        """
+    def get_response_information(self, gpt_response):
 
-        message = chatgpt_response.choices[0].message
+        message = gpt_response.choices[0].message
         content = message.content
 
         # Initializing function flag, 0: no function call and text context, 1: function call and None content
@@ -114,76 +103,27 @@ class GPTNode(Node):
             function_call_name = message.function_call.name
             function_call_arg = message.function_call.arguments
 
-        return content, function_flag, function_call_arg, function_call_name
-
-
-    def function_call(self, function_call_args, function_call_name):
-        """
-        Sends a function call request with the given input and waits for the response.
-        When the response is received, the function call response callback is called.
-        """
-        function_call_text = function_call_args
-        self.function_name = function_call_name
-
-        # Send function call request
-        self.function_call_request.request_text = function_call_text
-        self.function_call_request.request_name = function_call_name
-        future = self.function_call_client.call_async(self.function_call_request)
-        future.add_done_callback(self.function_call_response_callback)
-
-    def function_call_response_callback(self, future):
-        """
-        The function call response callback is called when the function call response is received.
-        the function_call_response_callback will call the gpt service again
-        to get the text response to user
-        """
-        try:
-            response = future.result()
-            self.get_logger().info(
-                f"Response from ChatGPT_function_call_service: {response}"
-            )
-
-        except Exception as e:
-            self.get_logger().info(f"ChatGPT function call service failed {e}")
-
-        response_text = response.response_text
+        return content, function_flag, function_call_name, function_call_arg
         
-        self.add_message_to_history(
-            role="function",
-            content=response_text.strip("\n").strip(),
-            name=self.function_name
-        )
-        
-        # Generate chat completion
-        second_chatgpt_response = self.generate_chatgpt_response(config.chat_history)
-        content_text, function_flag, function_call_arg, function_call_name = self.get_response_information(
-            second_chatgpt_response
-        )
-        if function_flag != 1:
-            self.add_message_to_history(
-                role="assistant", content=content_text.strip("\n").strip()
-            )
-            self.publish_string(content_text, self.llm_feedback_publisher)
 
     ####################################### HELPER FUNCTIONS ############################################
 
-    def add_message_to_history(
-        self, role, content="null", name=None
-    ):
-        """
-        Add a new message_element_object to the chat history
-        with the given role, content, and function call information.
-        The message_element_object dictionary contains
-        the key-value pairs for "role", "content", and "function_call".
-        If the chat history exceeds the maximum allowed length,
-        the oldest message_element_object will be removed.
-        Returns the updated chat history list.
-        """
+    def add_message_to_history(self, role, content="null", image=None, name=None):
 
-        # Adding message_element_object to chat history
+        cv_image = self.bridge.imgmsg_to_cv2(image, "bgr8")
+        _, buffer = cv2.imencode('.png', cv_image)
+
+        encoded_image = base64.b64encode(buffer.tobytes()).decode('utf-8')
+        
         message_element_object = {
             "role": role,
-            "content": content,
+            "content": [
+                        {"type": "text", "text": content},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/png;base64,{encoded_image}"},
+                        },
+            ],
         }
         if name is not None:
             message_element_object["name"] = name
@@ -196,14 +136,10 @@ class GPTNode(Node):
             )
         config.chat_history.pop(0)
 
-        # Returning updated chat history dictionary
         return config.chat_history
 
 
     def write_chat_history_to_json(self):
-        """
-        Write the chat history to a JSON file.
-        """
         try:
             # Converting chat history to JSON string
             json_data = json.dumps(config.chat_history)
@@ -217,16 +153,6 @@ class GPTNode(Node):
         except IOError as error:
             self.get_logger().error(f"Error writing chat history to JSON: {error}")
             return False
-
-
-    def publish_string(self, string_to_send, publisher_to_use):
-        msg = String()
-        msg.data = string_to_send
-
-        publisher_to_use.publish(msg)
-        self.get_logger().info(
-            f"Topic: {publisher_to_use.topic_name}\nMessage published: {msg.data}"
-        )
 
 def main(args=None):
     rclpy.init(args=args)
