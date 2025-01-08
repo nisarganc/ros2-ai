@@ -9,7 +9,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),        
-        ("share/" + package_name, ["package.xml"]),
+        ("share/" + package_name, ['package.xml']),
     ],
     install_requires=["setuptools", "msgs_interfaces"],
     zip_safe=True,
@@ -20,7 +20,7 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "gpt = vlm_model.gpt:main",
+            "GPT_node = vlm_model.GPT_node:main",
         ],
     },
 )

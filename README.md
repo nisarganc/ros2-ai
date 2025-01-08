@@ -50,6 +50,9 @@ source ~/.bashrc
 - ros2 launch turtles_bringup chatgpt_with_turtlebot.launch.py
 - ros2 topic pub /llm_input_message std_msgs/msg/String "data: 'Prompt message goes here'" -1
 
+## Multi-Robot Push
+- ros2 launch turtles_bringup multitb_push.launch.py
+
 ## Acknowledgements
 - Many thanks to the repository [ROS-LLM](https://github.com/Auromix/ROS-LLM).
 - [MR.CAP](https://github.com/h2jaafar/mr.cap) for multi-robot planning and control algorithm.

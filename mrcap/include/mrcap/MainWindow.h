@@ -17,7 +17,7 @@
 #include "SDF.h"
 #include "Utils.h"
 #include "Metrics.h"
-#include "Optimizer.h"
+#include "Optimizer_vlm.h"
 #include "Trajectory.h"
 #include <vector>
 #include <string>
@@ -479,7 +479,7 @@ public:
                     geometry_information.distance_to_robot = radiuses;
                     geometry_information.angle_to_robot = thetas;
 
-                    auto returned_info = PointMotion(optimization_parameter, geometry_information, covariance_information, disturbance, solver_parameters, sdf_s);
+                    auto returned_info = PointMotion_vlm(optimization_parameter, geometry_information, covariance_information, disturbance, solver_parameters, sdf_s);
 
                     robots = returned_info.first;
                     centroid = returned_info.second;

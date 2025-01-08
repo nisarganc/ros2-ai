@@ -1,4 +1,4 @@
-#!~/ros2-ai/objectpushing/bin python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # ROS related
@@ -11,14 +11,14 @@ import json
 import os
 import time
 from openai import OpenAI
-from openai_config import UserConfig
+from .openai_config import OpenAIConfig
 
 import cv2
 from cv_bridge import CvBridge
 import base64
 
 # Global Initialization
-config = UserConfig()
+config = OpenAIConfig()
 client = OpenAI(
     api_key=config.openai_api_key
     
@@ -30,13 +30,14 @@ class GPTNode(Node):
 
         # Server for GPT response: (Poses, Image) -> Twist
         self.function_call_server = self.create_service(
-            GPT, "/GPT_service", self.gpt_callback
+            GPT, "GPT_service", self.gpt_callback
         )
+        
         self.bridge = CvBridge()
 
         self.start_timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
         self.chat_history_file = os.path.join(
-            config.chat_history_path, f"chat_history_{self.start_timestamp}.json"
+            config.chat_history_path, f"multi_robot_{self.start_timestamp}.json"
         )
         self.write_chat_history_to_json()
         self.get_logger().info(f"Chat history saved to {self.chat_history_file}")
@@ -58,11 +59,15 @@ class GPTNode(Node):
             response = "Function call not found in GPT response"
 
         self.add_message_to_history(
-            role="assistant_function",
-            content=function_call_arg.strip("\n").strip(),
-            name=function_call_name
+            role="assistant",
+            content=content_text,
+            image=None,
+            func_name=function_call_name,
+            func_arg=function_call_arg,
         )
         self.write_chat_history_to_json()
+
+        self.get_logger().info(f"Response: {response}")
 
         return response
         
@@ -71,7 +76,7 @@ class GPTNode(Node):
         response = client.chat.completions.create(
             model=config.openai_model,
             messages=chat_history,
-            functions=config.robot_functions_list,
+            functions=config.response_functions_list,
             function_call="auto",            
             # temperature=config.openai_temperature,
             # top_p=config.openai_top_p,
@@ -82,19 +87,20 @@ class GPTNode(Node):
             # presence_penalty=config.openai_presence_penalty,
             # frequency_penalty=config.openai_frequency_penalty,
         )
-        self.get_logger().info(f"OpenAI response: {response}")
+        # self.get_logger().info(f"OpenAI response: {response}")
         return response
 
 
     def get_response_information(self, gpt_response):
 
         message = gpt_response.choices[0].message
-        content = message.content
+        content = message.content.strip("\n").strip()
+        self.get_logger().info(f"MESSAGE: {content}")
 
         # Initializing function flag, 0: no function call and text context, 1: function call and None content
         function_flag = 0
 
-        if content is not None:
+        if message.function_call is None:
             function_flag = 0
             function_call_name = None
             function_call_arg = None
@@ -108,25 +114,32 @@ class GPTNode(Node):
 
     ####################################### HELPER FUNCTIONS ############################################
 
-    def add_message_to_history(self, role, content="null", image=None, name=None):
+    def add_message_to_history(self, role, content="null", image=None, func_name=None, func_arg=None):
 
-        cv_image = self.bridge.imgmsg_to_cv2(image, "bgr8")
-        _, buffer = cv2.imencode('.png', cv_image)
+        if role == "user":
+            cv_image = self.bridge.imgmsg_to_cv2(image, "bgr8")
+            _, buffer = cv2.imencode('.png', cv_image)
 
-        encoded_image = base64.b64encode(buffer.tobytes()).decode('utf-8')
+            encoded_image = base64.b64encode(buffer.tobytes()).decode('utf-8')
         
-        message_element_object = {
-            "role": role,
-            "content": [
-                        {"type": "text", "text": content},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/png;base64,{encoded_image}"},
-                        },
-            ],
-        }
-        if name is not None:
-            message_element_object["name"] = name
+            message_element_object = {
+                "role": role,
+                "content": [
+                            {"type": "text", "text": content},
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": f"data:image/png;base64,{encoded_image}"},
+                            },
+                ],
+            }
+        else:
+            message_element_object = {
+                "role": role,
+                "content": [
+                            {"type": "text", "text": content},
+                            {"type": "function", "function_name": func_name, "function_arg": func_arg},
+                ],
+            }
         
         config.chat_history.append(message_element_object)
 

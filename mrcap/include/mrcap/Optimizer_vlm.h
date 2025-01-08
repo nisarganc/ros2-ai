@@ -57,53 +57,14 @@ std::mutex vicon_mutex;
 int robot_failed;
 
 
-void robotController(
-    const RobotData &robot,
-    std::shared_ptr<ArucoSubscriber> subscriber,
-    std::shared_ptr<VelocityPublisher> publisher,
-    double proportional_gain,
-    double pid_error_threshold,
-    double wheel_speed_limit) {
-    // Get the start time
-    auto start_time = std::chrono::steady_clock::now();
-    int timeout_seconds = 160;
-    rclcpp::spin_some(subscriber);
-    gtsam::Pose2 X_robot_during_rotation = gtsam::Pose2(robot_poses[robot.robot_id - 1].x, robot_poses[robot.robot_id - 1].y, robot_poses[robot.robot_id - 1].yaw);
-    double angle_diff = Utils::ensure_orientation_range2(robot.target_orientation - X_robot_during_rotation.theta());
-
-    while (abs(angle_diff) > pid_error_threshold) {
-        // Check if the timeout has been reached
-        auto current_time = std::chrono::steady_clock::now();
-        auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
-        if (elapsed_time >= timeout_seconds) {
-            std::cerr << "Timeout reached for Robot " << robot.robot_id << std::endl;
-            robot_failed = 3;
-            break;  // Exit the loop if timeout is reached
-        }
-
-        double V = 0;
-        double w = proportional_gain * angle_diff;
-        w = std::clamp(w, -wheel_speed_limit, wheel_speed_limit);
-        publisher->publish(V, w);
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
-        rclcpp::spin_some(subscriber);
-        X_robot_during_rotation = gtsam::Pose2(robot_poses[robot.robot_id - 1].x, robot_poses[robot.robot_id - 1].y, robot_poses[robot.robot_id - 1].yaw);
-        angle_diff = Utils::ensure_orientation_range2(robot.target_orientation - X_robot_during_rotation.theta());
-    }
-
-    publisher->publish(0, 0);
-    std::cout << "Robot " << robot.robot_id << " finished rotating" << std::endl;
-}
-
-
 // ==================================== PointMotion Function =====================================
-std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_parameter &optimization_parameter, Geometry_information geometry_information, std::vector<gtsam::Vector3> covariance_info,
+std::pair<std::vector<RobotData>, CentroidData> PointMotion_vlm(Optimization_parameter &optimization_parameter, Geometry_information geometry_information, std::vector<gtsam::Vector3> covariance_info,
                                                             Utils::Disturbance disturbance_info, std::vector<double> solverer_params, SDF_s sdf_s) {
 
     gtsam::Values init_values;
 
-    // create arrays to store reference poses
-    Trajectory::ref_trajv X_ref(optimization_parameter, geometry_information); // change Trajectory.h
+    // create arrays to store reference poses: change Trajectory.h
+    Trajectory::ref_trajv X_ref(optimization_parameter, geometry_information);
 
     // optimization parameter
     int Ts_translation = optimization_parameter.time_for_translation;
@@ -117,9 +78,6 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
     double derivative_gain = optimization_parameter.derivative_gain;
 
     auto ROS_Enabled = optimization_parameter.run_ros_nodes;
-    int reference_trajectory_type = optimization_parameter.reference_trajectory_type;
-    int push_box = optimization_parameter.push_box;
-    int separation_of_action = optimization_parameter.separation_of_action;
     int use_sdf = optimization_parameter.obstacle_avoidance;
     int adjust_centroid_orientation = optimization_parameter.adjust_centroid_orientation;
     int use_custom_trajectory = optimization_parameter.use_custom_trajectory;
@@ -146,41 +104,30 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
     double L = geometry_information.robot_width;
 
     int dummy = std::system("clear");
-    std::cout << "\n================= Start =================" << std::endl;
-    if(use_custom_trajectory) {
-        std::cout << "Using custom reference trajectory" << std::endl;
-    }
-    if(use_sdf) {
-        std::cout << "Using SDF" << std::endl;
-    }
-    if(ROS_Enabled) {
-        std::cout << "ROS Enabled" << std::endl;
-    }
-
-
-    std::cout << "=========================================" << std::endl;
 
     std::vector<RobotData> robots(nr_of_robots);
     CentroidData centroid;
 
-    ///////////////////////////////////////////// ROS Initialization /////////////////////////////////////////////
     int k;
+
+    // ROS2 init
     rclcpp::init(0, nullptr);
     if (ROS_Enabled == true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(4000));
     }
+
     std::vector<std::shared_ptr<VelocityPublisher>> publishers;
     std::vector<std::shared_ptr<ArucoSubscriber>> subscribers;
+    auto vlm_service_client_node = std::make_shared<VLMServiceClient>();
     auto ref_traj_publisher_node = std::make_shared<RefTrajectoryPublisher>(centroid, use_gazebo);
-    
-    
     auto rc_subscriber_node = std::make_shared<ArucoSubscriber>("40");
+
     int i = 0;
     for (auto &&robot : robots) {
+        // subscribers
         robot.robot_id = i + 1;
         int robot_id_sub = robot.robot_id;
-        // std::cout << "robot " << robot_id_sub << std::endl;
-        auto subscriber_node = std::make_shared<ArucoSubscriber>("0" + std::to_string(robot_id_sub));
+        auto subscriber_node = std::make_shared<ArucoSubscriber>(std::to_string(robot_id_sub));
         subscribers.push_back(subscriber_node);
         i = i + 1;
     }
@@ -188,82 +135,51 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
     for (auto &&robot : robots) {
         // publishers
         int robot_id_sub = robot.robot_id;
-        auto publisher_node = std::make_shared<VelocityPublisher>("0" + std::to_string(robot_id_sub));
-        // publisher_executor.add_node(publisher_node);
+        auto publisher_node = std::make_shared<VelocityPublisher>(std::to_string(robot_id_sub));
         publishers.push_back(publisher_node);
     }
 
-    if (ROS_Enabled) {
-        // std::cout << "Stopping robots" << std::endl;
-        for (auto &&publisher : publishers) {
-            publisher->publish(0, 0);
-        }
-        for (auto &&subscriber : subscribers) {
-            rclcpp::spin_some(subscriber);
-            rclcpp::spin_some(subscriber);
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-        rclcpp::spin_some(rc_subscriber_node);
-        for (auto &&subscriber : subscribers) {
-            rclcpp::spin_some(subscriber);
-            rclcpp::spin_some(subscriber);
+    for (auto &&subscriber : subscribers) {
+        rclcpp::spin_some(subscriber);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                }
-        rclcpp::spin_some(rc_subscriber_node);
-        rclcpp::spin_some(rc_subscriber_node);
+    }
 
-        std::cout << "Subscribing to initial robot positions. . . " << std::endl;
-        for (int i = 0; i < robot_poses.size(); i++) {
-            while (robot_poses[i].x == 0 && robot_poses[i].y == 0 && robot_poses[i].yaw == 0) {
-                rclcpp::spin_some(subscribers[i]);
-                rclcpp::spin_some(subscribers[i]);
-                rclcpp::spin_some(rc_subscriber_node);
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-            }
-            robots[i].X_k_real.push_back(gtsam::Pose2(robot_poses[i].x, robot_poses[i].y, robot_poses[i].yaw));
-            robots[i].X_k_modelled.push_back(gtsam::Pose2(robot_poses[i].x, robot_poses[i].y, robot_poses[i].yaw));
-            // std::cout << "robot " << i + 1 << " position: " << robot_poses[i].x << ", " << robot_poses[i].y << ", " << robot_poses[i].yaw << std::endl;
-        }
-        // while(centroid_pose.x == 0 && centroid_pose.y == 0 && centroid_pose.yaw == 0) {
-            rclcpp::spin_some(rc_subscriber_node);
+    rclcpp::spin_some(rc_subscriber_node);
+
+    // ROS2 calls
+    std::cout << "Subscribing to initial robot positions. . . " << std::endl;
+    for (int i = 0; i < robot_poses.size(); i++) {
+        while (robot_poses[i].x == 0 && robot_poses[i].y == 0 && robot_poses[i].yaw == 0) {
+            rclcpp::spin_some(subscribers[i]);
             rclcpp::spin_some(rc_subscriber_node);
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        // }
-        centroid.X_k_real.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
-        centroid.X_k_modelled.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
+        }
+
+        robots[i].X_k_real.push_back(gtsam::Pose2(robot_poses[i].x, robot_poses[i].y, robot_poses[i].yaw));
+        robots[i].X_k_modelled.push_back(gtsam::Pose2(robot_poses[i].x, robot_poses[i].y, robot_poses[i].yaw));
+        std::cout << "robot " << i + 1 << " position: " << robot_poses[i].x << ", " << robot_poses[i].y << ", " << robot_poses[i].yaw << std::endl;
     }
 
-    /////////////////////////////////////////////// Centroid Trajectory /////////////////////////////////////////////// 
-
-    gtsam::Pose2 ref_traj_start_pose;
-    if (ROS_Enabled) {
-        ref_traj_start_pose = gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw);
-        Utils::calcualte_R_and_theta_vectors(centroid, robots, geometry_information);
-    } else {
-            ref_traj_start_pose = optimization_parameter.ref_traj_start_pose;
+    while(centroid_pose.x == 0 && centroid_pose.y == 0 && centroid_pose.yaw == 0) {
+        rclcpp::spin_some(rc_subscriber_node);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
+    centroid.X_k_real.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
+    centroid.X_k_modelled.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
+    std::cout << "centroid position: " << centroid_pose.x << ", " << centroid_pose.y << ", " << centroid_pose.yaw << std::endl;
 
-    X_ref.set_initial(ref_traj_start_pose);
+    rclcpp::spin_some(vlm_service_client_node);
 
-    switch (reference_trajectory_type) {
-    case 0: {
-        X_ref.set_final(ref_traj_end_pose);
-        X_ref.set_overall_dist();
-    } break;
+    
+    // computing centroid reference trajectory
+    gtsam::Pose2 ref_traj_start_pose; 
+    ref_traj_start_pose = gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw);
+    Utils::calcualte_R_and_theta_vectors(centroid, robots, geometry_information);
 
-    case 1: {
-        X_ref.set_final(ref_traj_end_pose);
-        X_ref.set_overall_angle();
-        X_ref.set_amplitude(ref_traj_amplitude);
-        X_ref.set_angular_freq(ref_traj_angular_frequency);
-    } break;
-
-    case 2: {
-        X_ref.set_center_of_rotation(ref_traj_center_of_rotation);
-    } break;
-    }
-
-    X_ref.fill();
+    X_ref.set_initial(ref_traj_start_pose); //initial pose of the object
+    X_ref.set_final(ref_traj_end_pose);
+    X_ref.set_overall_dist();
+    X_ref.fill(); //computes the reference trajectory of object
 
     gtsam::Vector2 covariance_ternary_vec_2D(covariance_info[2][0], covariance_info[2][1]);
     gtsam::Vector1 covariance_obs_vec_1D(covariance_info[3][0]);
@@ -292,10 +208,10 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
         centroid.X_k_ref.push_back(pose_ref);
     }
 
-    if (print_ref_traj) {
-        std::cout << "\nCentroid Reference Trajectory" << std::endl;
-        Utils::printPoseVector(centroid.X_k_ref);
-    }
+
+    std::cout << "\nCentroid Reference Trajectory" << std::endl;
+    Utils::printPoseVector(centroid.X_k_ref);
+
 
     // Centroid control 
     for (int k = 0; k < max_states; k++) { // centroid rotation is ignored
@@ -307,15 +223,6 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
     for (auto &&robot : robots) {
         double R_i = geometry_information.distance_to_robot[robot.robot_id - 1];
         double th_i = geometry_information.angle_to_robot[robot.robot_id - 1];
-        if (!ROS_Enabled) {
-            robot.X_k_modelled.push_back(Geometry::solveForRobotPose(centroid.X_k_ref[0], R_i, th_i));
-            robot.X_k_real.push_back(Geometry::solveForRobotPose(centroid.X_k_ref[0], R_i, th_i));
-            // std::cout << "robot " << i + 1 << " position" << robot.X_k_real[0].x() << ", " << robot.X_k_real[0].y() << ", " << robot.X_k_real[0].theta() << std::endl;
-        }
-    }
-    if (!ROS_Enabled) {
-        centroid.X_k_modelled.push_back(centroid.X_k_ref[0]);
-        centroid.X_k_real.push_back(centroid.X_k_ref[0]);
     }
  
     centroid.prev_X_k_optimized = centroid.X_k_ref;
@@ -351,28 +258,17 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
 
     // print parameters
     std::cout << "=========================================" << std::endl;
-    std::cout << "Solver Parameters" << std::endl;
+    std::cout << "Factor Graph Optimization" << std::endl;
     std::cout << "=========================================" << std::endl;
 
-
-    ///////////////////////////////////////////// Optimization Loop /////////////////////////////////////////////
     benchmark.start();
     for (k = 0; k < max_states; k++) {
 
         std::cout << "\n---------------------------------" << std::endl;
         std::cout << "iteration " << k << std::endl;
 
-        gtsam::Pose2 disturbance_pose;
-        if ((k == disturbance_info.pose_number) && (!ROS_Enabled)) {
-            if (disturbance_info.axis == 0 || disturbance_info.axis == 1) {
-                double disturbance = (disturbance_info.axis == 0) ? disturbance_info.disturbance_value : 0;
-                double disturbance_y = (disturbance_info.axis == 1) ? disturbance_info.disturbance_value : 0;
-                disturbance_pose = gtsam::Pose2(disturbance, disturbance_y, 0);
-            }
-        }
-
         NonlinearFactorGraph graph;
-        // Unpack directly into graph and init_values
+        
         std::tie(graph, init_values) = MultiRobotFG(k, optimization_parameter, robots, centroid, noise_models, geometry_information, sdf_s);
 
         gtsam::LevenbergMarquardtOptimizer optimizer(graph, init_values, parameters);
@@ -383,9 +279,8 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
 
         // Conversion and assignment
         centroid.X_k_fg = Utils::valuesToPose_mod(result, k, optimization_parameter, 0);
-        // print centroid.X_k_fg which is gtsam::pose type
-        // Printing the trajectory
-         std::cout << "Returned Trajectory:" << std::endl;
+
+        std::cout << "Returned Trajectory:" << std::endl;
         for (size_t i = 0; i < centroid.X_k_fg.size(); ++i) {
             const auto& pose = centroid.X_k_fg[i];
             std::cout << "Pose " << i + 1 << ": ";
@@ -417,8 +312,10 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
 
         //////////////////////////////////////// Multi-Robots Control ////////////////////////////////////////
 
-        
+        vlm_service_client_node->send_request(robots, centroid_pose, centroid.X_k_fg[k+1]);
 
+        // update
+        
         
     } // end of main loop
 

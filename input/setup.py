@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools', 'llm_config'],
+    install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Nisarga',
     maintainer_email='nisarga.nilavadi@utn.de',

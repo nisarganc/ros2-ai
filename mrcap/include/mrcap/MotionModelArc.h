@@ -2,9 +2,7 @@
 
 namespace MotionModelArc
 {
-    /* -------------------------------------------------------------------------- */
-    /*                    Modelled Trajectory Used For Plotting                   */
-    /* -------------------------------------------------------------------------- */
+
     struct traj_info
     {
         // linear       (if action_type = 0)
@@ -48,19 +46,9 @@ namespace MotionModelArc
         double y_next = y_now;
         double theta_next = theta_now;
 
-        // Assuming that the check_action_given_centroid_control function's result is pre-determined,
-        // this switch case could be optimized away if you already know the action outside this function
-        int action = Utils::check_action_given_centroid_control(current_centroid_speed);
-        if (action == 0) {
-            // Handle error outside of the optimization loop, if possible
-            throw std::invalid_argument("Centroid speed does not allow for pure rotation or translation");
-        } else if (action == 1) // pure translation
-        {
-            x_next += x_dot * optimization_parameter.time_for_translation;
-            y_next += y_dot * optimization_parameter.time_for_translation;
-            // theta_next is already set to theta_now
-        }
-        // Include other cases if necessary
+        x_next += x_dot * optimization_parameter.time_for_translation;
+        y_next += y_dot * optimization_parameter.time_for_translation;
+        theta_next = theta_dot * optimization_parameter.time_for_centroid_rotation;
 
         return gtsam::Pose2(x_next, y_next, theta_next);
     }
@@ -89,20 +77,13 @@ namespace MotionModelArc
 
         double x_dot, y_dot, theta_dot;
 
-        switch (Utils::check_action_given_centroid_poses(current_centroid_pose, next_centroid_pose))
-        {
-            case 1: // pure translation
-            {
-                x_dot = (x_next - x_now) / Ts;
-                y_dot = (y_next - y_now) / Ts;
-                theta_dot = 0;
-            }
-            break;
-
-        }
+        x_dot = (x_next - x_now) / Ts;
+        y_dot = (y_next - y_now) / Ts;
+        theta_dot = (theta_next - theta_now) / Ts;
 
         return gtsam::Pose2(x_dot, y_dot, theta_dot);
     }
+    
     
     gtsam::Pose2 robot_solveForNextPose(gtsam::Pose2 current_robot_pose, gtsam::Pose2 current_wheel_speeds, Optimization_parameter optimization_parameter, Geometry_information geometry_information, traj_info *traj_info = &traj_info_default)
     {

@@ -9,15 +9,21 @@ def generate_launch_description():
     return LaunchDescription(
         [
             Node(
-                package="aruco_poses",
-                executable="aruco_detector_node",
-                name="aruco_detector_node",
+                package="pose_estimation",
+                executable="aruco_pose_node",
+                name="aruco_pose_node",
                 output="screen",
             ),
             Node(
                 package="mrcap",
                 executable="mrcap_node",
                 name="mrcap_node",
+                output="screen",
+            ),
+            Node(
+                package="vlm_model",
+                executable="GPT_node",
+                name="GPT_node",
                 output="screen",
             )
             # Node(

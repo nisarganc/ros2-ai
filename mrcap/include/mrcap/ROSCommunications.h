@@ -15,8 +15,11 @@
 
 #include <msgs_interfaces/msg/marker_pose.hpp>
 #include <msgs_interfaces/msg/marker_pose_array.hpp>
+#include <msgs_interfaces/srv/gpt.hpp>
 
 #include "DataTypes/RobotData.h"
+
+#include <sensor_msgs/msg/image.hpp>
 
 
 // ==================================== ROS2 subscriber and publisher =========================================
@@ -31,6 +34,10 @@ struct ROSPose {
 
 std::vector<ROSPose> robot_poses(3);
 ROSPose centroid_pose;
+
+ROSPose turtle2, turtle4, turtle6;
+sensor_msgs::msg::Image aruco_image_msg;
+
 
 
 ////////////////////////////////////////////// ROS2 Trajectory Publisher //////////////////////////////////////////////////
@@ -92,6 +99,8 @@ private:
   void topicCallback(msgs_interfaces::msg::MarkerPoseArray::SharedPtr msg) {
     int robot_id = std::stoi(robot_id_);
 
+    // read image 
+    aruco_image_msg = msg->image;
     for (int i = 0; i < msg->poses.size(); i++)
     {      
       if (msg->poses[i].id == robot_id && robot_id == 40)
@@ -169,4 +178,64 @@ public:
   private:
   std::string robot_id_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
+};
+
+class VLMServiceClient : public rclcpp::Node {
+public:
+  VLMServiceClient(): Node("VLM_service_client")
+  {
+    client_ = this->create_client<msgs_interfaces::srv::GPT>("GPT_service");
+
+    // Wait for the service to be available
+    while (!client_->wait_for_service(std::chrono::seconds(1))) {
+      RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
+    }
+
+  }
+
+  void send_request(std::vector<RobotData> robots_poses, ROSPose centroid_pose, gtsam::Pose2 next_centroid_pose)
+  {
+    auto request = std::make_shared<msgs_interfaces::srv::GPT::Request>();
+    for (auto &&robot : robots_poses) {
+      if (robot.robot_id == 1) {
+        turtle2.x = robot.X_k_real.back().x();
+        turtle2.y = robot.X_k_real.back().y();
+        turtle2.yaw = robot.X_k_real.back().theta();
+      } else if (robot.robot_id == 2) {
+        turtle4.x = robot.X_k_real.back().x();
+        turtle4.y = robot.X_k_real.back().y();
+        turtle4.yaw = robot.X_k_real.back().theta();
+      } else if (robot.robot_id == 3) {
+        turtle6.x = robot.X_k_real.back().x();
+        turtle6.y = robot.X_k_real.back().y();
+        turtle6.yaw = robot.X_k_real.back().theta();
+      } 
+      
+    }
+    // request->poses_text = "Note that all poses follow this syntax (x, y, yaw) and yaw angle of robots can be between -pi to pi according to right hand tumb rule. The pose of turtle2 with marker-id 10 is ({}, {}, {}), turtle4 with marker-id 20 is ({}, {}, {}), and turtle6 with marker-id 30 is ({}, {}, {}). The pose of manipulating object with marker-id 40 is ({}, {}, {}). Please return control commands of all turtles such that next pose of manipulating object with marker-id 40 is ({}, {}, {}). "; 
+    std::ostringstream oss;
+    oss << "Note that all poses follow this syntax (x, y, yaw) and yaw angle of robots can be between -pi to pi according to right hand thumb rule. "
+        << "The pose of turtle2 with marker-id 10 is (" << turtle2.x << ", " << turtle2.y << ", " << turtle2.yaw << "), "
+        << "turtle4 with marker-id 20 is (" << turtle4.x << ", " << turtle4.y << ", " << turtle4.yaw << "), "
+        << "and turtle6 with marker-id 30 is (" << turtle6.x << ", " << turtle6.y << ", " << turtle6.yaw << "). "
+        << "The pose of manipulating object with marker-id 40 is (" << centroid_pose.x << ", " << centroid_pose.y << ", " << centroid_pose.yaw << "). "
+        << "Please return control commands of all turtles such that next pose of manipulating object with marker-id 40 is ("
+        << next_centroid_pose.x() << ", " << next_centroid_pose.y() << ", " << next_centroid_pose.theta() << ").";
+
+    request->poses_text = oss.str();
+    request->image = aruco_image_msg;
+
+    auto result = client_->async_send_request(request);
+    
+    try{
+      auto response = result.get();
+      RCLCPP_INFO(this->get_logger(), "Result of GPT: %s", response->response_text.c_str());
+    } 
+    catch (const std::exception& e) {
+      RCLCPP_ERROR(this->get_logger(), "Failed to call service");
+    }
+  }
+
+  private:
+  rclcpp::Client<msgs_interfaces::srv::GPT>::SharedPtr client_;
 };

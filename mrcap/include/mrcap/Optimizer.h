@@ -433,7 +433,6 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion(Optimization_paramet
 
                 std::vector<std::pair<gtsam::Vector2, double>> rotation_and_arc_speeds;
 
-
                     rotation_and_arc_speeds = MotionModelArc::robot_solveForControl_CentroidRotation(centroid.U_k_fg[k], centroid.X_k_real[k], robot.X_k_real[k], robot.robot_id, optimization_parameter, geometry_information);
 
                 gtsam::Vector2 robot_rotation_control_effort = rotation_and_arc_speeds[0].first;

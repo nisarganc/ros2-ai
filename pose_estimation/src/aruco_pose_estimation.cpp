@@ -25,7 +25,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
             RobotMap[30] = 3;
             RobotMap[40] = 40;
 
-            cap = std::make_shared<cv::VideoCapture>(4);
+            cap = std::make_shared<cv::VideoCapture>(0);
             if (!cap->isOpened()) {
                 RCLCPP_ERROR(this->get_logger(), "Failed to open camera");
                 return;
@@ -56,7 +56,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
             // distCoeffs.at<double>(3) = -0.10166391;
             // distCoeffs.at<double>(4) = -0.06502892;
 
-            //rvec0_tvec0 = WorldFrame();
+            // rvec0_tvec0 = WorldFrame();
 
         }
 

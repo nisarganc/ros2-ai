@@ -9,6 +9,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(gazebo_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(msgs_interfaces REQUIRED)
@@ -41,6 +42,7 @@ ament_target_dependencies(mrcap_node
   "tf2"
   "msgs_interfaces"
   "pose_estimation"
+  "sensor_msgs"
 )
 
 # Link to the third-party libraries with plain style

@@ -7,8 +7,6 @@ Handle exception case where 0 marker is not detected
 mrcap:
 Fix fg equation: no rotation while generating centroid control commands
 check quaternions conversions in roscommunication file
-create srv client:
-- msg: "The pose of turtle2 with marker-id {} is {}, turtle4 with marker-id {} is {}, and turtle6 with marker-id {} is {}. The pose of manipulating object with marker-id {} is {}. Please return control commands of all turtles such that next pose of manipulating object with marker-id {} is{}. All poses follow this syntax (x, y, yaw). Note that yaw angle of robots can be between -pi to pi according to right hand tumb rule."
 
 Response_behavior function: 
 - How to handle sync of control commands, time duration of execution and sequence of control commands. 

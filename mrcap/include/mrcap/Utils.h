@@ -232,34 +232,6 @@ namespace Utils
     return centroid_action; 
   }
 
-  int check_action_given_centroid_poses(gtsam::Pose2 current_centroid_pose, gtsam::Pose2 next_centroid_pose)
-  {
-    int centroid_action = 0;
-    // double zero_threshold = 0.00001;
-    // double distance_threshold = 0.02;
-    double distance_threshold = 0.00001;
-    double zero_threshold = 0.05;
-
-    double delta_theta = ensure_orientation_range(next_centroid_pose.theta() - current_centroid_pose.theta());
-    double displacement = distance_between_points(current_centroid_pose, next_centroid_pose);
-
-    // pure translation of centroid
-    if (displacement > distance_threshold)
-    {
-      centroid_action = 1;
-    }
-    // wait (for robot rotation)
-    else if (delta_theta < zero_threshold)
-    {
-      centroid_action = 2;
-    }
-    // pure rotation of centroid
-    else if (delta_theta > zero_threshold)
-    {
-      centroid_action = 3;
-    }
-    return centroid_action; 
-  }
 
   int check_action_given_robot_control(gtsam::Pose2 wheel_speed)
   {
@@ -290,7 +262,7 @@ namespace Utils
    * @return returned_trajectory of std::vector<gtsam:Pose2> 
    */ 
   std::vector<gtsam::Pose2> valuesToPose_mod(gtsam::Values& values, int k, Optimization_parameter optimization_parameter, int robot_id)
-{
+  {
     int max_states = optimization_parameter.nr_of_steps;
     std::vector<gtsam::Pose2> returned_trajectory;
     gtsam::Symbol key_pos;
