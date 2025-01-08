@@ -35,15 +35,12 @@ class GPTNode(Node):
         
         self.bridge = CvBridge()
 
+        # Initialize chat history
         self.start_timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
         self.chat_history_file = os.path.join(
             config.chat_history_path, f"multi_robot_{self.start_timestamp}.json"
         )
         self.write_chat_history_to_json()
-        self.get_logger().info(f"Chat history saved to {self.chat_history_file}")
-
-        # Function name
-        self.function_name = "null"
 
 
     ##################################### CHATGPT RESPONSE ############################################
@@ -96,6 +93,8 @@ class GPTNode(Node):
         message = gpt_response.choices[0].message
         content = message.content.strip("\n").strip()
         self.get_logger().info(f"MESSAGE: {content}")
+        self.get_logger().info(f"FUNCTION CALL: {message.function_call.name}")
+        self.get_logger().info(f"FUNCTION ARG: {message.function_call.arguments}")
 
         # Initializing function flag, 0: no function call and text context, 1: function call and None content
         function_flag = 0
@@ -147,7 +146,7 @@ class GPTNode(Node):
             self.get_logger().info(
                 f"Chat history is too long, popping out the oldest message: {config.chat_history[0]}"
             )
-        config.chat_history.pop(0)
+            config.chat_history.pop(0)
 
         return config.chat_history
 
