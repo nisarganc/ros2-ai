@@ -12,6 +12,7 @@ import os
 import time
 from openai import OpenAI
 from .openai_config import OpenAIConfig
+from .response_format import Multi_Robot_Control
 
 import cv2
 from cv_bridge import CvBridge
@@ -46,74 +47,64 @@ class GPTNode(Node):
     ##################################### CHATGPT RESPONSE ############################################
     def gpt_callback(self, request, response):
 
-        self.add_message_to_history("user", content=request.poses_text, image=request.image)     
-        gpt_response = self.generate_gpt_response(config.chat_history)
-        content_text, function_flag, function_call_name, function_call_arg = self.get_response_information(gpt_response)
+        self.add_message_to_history("user", content=request.poses_text, image=request.image) 
 
-        if function_flag == 1:
-            response = function_call_arg
-        else:
-            response = "Function call not found in GPT response"
+        gpt_response = self.generate_gpt_response(config.chat_history)
+        content, final_response = self.format_response_information(gpt_response)
+        
+        response_text = json.dumps(final_response)
+
+        for marker in final_response:
+            if marker['marker_id'] == 10:
+                response.response_linearx1 = marker['linear_x']
+                response.response_angularz1 = marker['angular_z']
+            elif marker['marker_id'] == 20:
+                response.response_linearx2 = marker['linear_x']
+                response.response_angularz2 = marker['angular_z']
+            elif marker['marker_id'] == 30:
+                response.response_linearx3 = marker['linear_x']
+                response.response_angularz3 = marker['angular_z']
 
         self.add_message_to_history(
             role="assistant",
-            content=content_text,
-            image=None,
-            func_name=function_call_name,
-            func_arg=function_call_arg,
+            content=response_text,
+            image=None
         )
-        self.write_chat_history_to_json()
-
-        self.get_logger().info(f"Response: {response}")
+        self.get_logger().info(f"Response: {response}") 
 
         return response
         
 
     def generate_gpt_response(self, chat_history):
-        response = client.chat.completions.create(
+        response = client.beta.chat.completions.parse(
             model=config.openai_model,
             messages=chat_history,
-            functions=config.response_functions_list,
-            function_call="auto",            
-            # temperature=config.openai_temperature,
-            # top_p=config.openai_top_p,
-            # n=config.openai_n,
-            # stream=config.openai_stream,
-            # stop=config.openai_stop,
-            # max_tokens=config.openai_max_tokens,
-            # presence_penalty=config.openai_presence_penalty,
-            # frequency_penalty=config.openai_frequency_penalty,
+            response_format=Multi_Robot_Control
+            # functions=config.response_functions_list,
+            # function_call="auto"
         )
         # self.get_logger().info(f"OpenAI response: {response}")
         return response
 
 
-    def get_response_information(self, gpt_response):
+    def format_response_information(self, gpt_response):
 
         message = gpt_response.choices[0].message
         content = message.content.strip("\n").strip()
         self.get_logger().info(f"MESSAGE: {content}")
-        self.get_logger().info(f"FUNCTION CALL: {message.function_call.name}")
-        self.get_logger().info(f"FUNCTION ARG: {message.function_call.arguments}")
 
-        # Initializing function flag, 0: no function call and text context, 1: function call and None content
-        function_flag = 0
+        content = json.loads(content)
+        steps = content["steps"]
+        final_response = content["final_response"]
+        # steps = gpt_response.choices[0].message.parsed.steps
+        # final_response = gpt_response.choices[0].message.parsed.final_response
 
-        if message.function_call is None:
-            function_flag = 0
-            function_call_name = None
-            function_call_arg = None
-        else:
-            function_flag = 1
-            function_call_name = message.function_call.name
-            function_call_arg = message.function_call.arguments
-
-        return content, function_flag, function_call_name, function_call_arg
+        return content, final_response
         
 
     ####################################### HELPER FUNCTIONS ############################################
 
-    def add_message_to_history(self, role, content="null", image=None, func_name=None, func_arg=None):
+    def add_message_to_history(self, role, content="null", image=None):
 
         if role == "user":
             cv_image = self.bridge.imgmsg_to_cv2(image, "bgr8")
@@ -136,11 +127,11 @@ class GPTNode(Node):
                 "role": role,
                 "content": [
                             {"type": "text", "text": content},
-                            {"type": "function", "function_name": func_name, "function_arg": func_arg},
                 ],
             }
         
         config.chat_history.append(message_element_object)
+        self.write_chat_history_to_json()
 
         if len(config.chat_history) > config.chat_history_max_length: 
             self.get_logger().info(

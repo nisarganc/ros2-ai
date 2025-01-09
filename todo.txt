@@ -6,7 +6,7 @@ Handle exception case where 0 marker is not detected
 
 mrcap:
 Fix fg equation: no rotation while generating centroid control commands
-check quaternions conversions in roscommunication file
+BUG: next centroid position from GTSAM
 
 Response_behavior function: 
 - How to handle sync of control commands, time duration of execution and sequence of control commands. 
@@ -14,6 +14,7 @@ Response_behavior function:
 real world robots:
 check if robot frame and aruco frame coincide with each other?
 check if increasing k results in smooth traj?
+turtle4 and 6 are not executing control commands
 
 README.md:
 update requirements file for python

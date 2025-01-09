@@ -142,7 +142,8 @@ namespace Trajectory
                 counter = static_cast<double>(i);
                 x = start_pose.x() + counter * overall_dist[0] / last;
                 y = start_pose.y() + counter * overall_dist[1] / last;
-                theta = start_pose.theta();
+                // theta = start_pose.theta();
+                theta = start_pose.theta() + counter * (end_pose.theta() - start_pose.theta()) / last;
                 gtsam::Pose2 pose(x, y, theta);
                 reference_trajectory.push_back(pose);
             }
@@ -150,7 +151,7 @@ namespace Trajectory
                 
             for (i = 0; i <= last; i++)
             {            
-                reference_trajectory[i] = gtsam::Pose2(reference_trajectory[i].x(), reference_trajectory[i].y(), start_pose.theta());
+                reference_trajectory[i] = gtsam::Pose2(reference_trajectory[i].x(), reference_trajectory[i].y(), reference_trajectory[i].theta());
             }
         }
 

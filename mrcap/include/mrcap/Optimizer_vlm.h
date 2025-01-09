@@ -122,14 +122,14 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion_vlm(Optimization_par
     auto ref_traj_publisher_node = std::make_shared<RefTrajectoryPublisher>(centroid, use_gazebo);
     auto rc_subscriber_node = std::make_shared<ArucoSubscriber>("40");
 
-    int i = 0;
+    int i = 1;
     for (auto &&robot : robots) {
         // subscribers
-        robot.robot_id = i + 1;
+        robot.robot_id = i;
         int robot_id_sub = robot.robot_id;
         auto subscriber_node = std::make_shared<ArucoSubscriber>(std::to_string(robot_id_sub));
         subscribers.push_back(subscriber_node);
-        i = i + 1;
+        i++;
     }
 
     for (auto &&robot : robots) {
@@ -197,6 +197,7 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion_vlm(Optimization_par
         noiseModel::Diagonal::Sigmas(covariance_info[4]),
     };
 
+    // assign the reference trajectory to centroid object
     std::vector<gtsam::Pose2> custom_reference_trajectory_vec = optimization_parameter.custom_reference_trajectory_vector;
     for (int k = 0; k <= max_states; k++) {
         gtsam::Pose2 pose_ref;
@@ -277,7 +278,7 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion_vlm(Optimization_par
         optimizer.optimize();
         gtsam::Values result = optimizer.values();
 
-        // Conversion and assignment
+        // Conversion and assignment: LOOK AT THE CALCULATION
         centroid.X_k_fg = Utils::valuesToPose_mod(result, k, optimization_parameter, 0);
 
         std::cout << "Returned Trajectory:" << std::endl;
@@ -312,11 +313,27 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion_vlm(Optimization_par
 
         //////////////////////////////////////// Multi-Robots Control ////////////////////////////////////////
 
-        vlm_service_client_node->send_request(robots, centroid_pose, centroid.X_k_fg[k+1]);
+        vlm_service_client_node->send_request(robots, centroid_pose, centroid.X_k_fg[k+1], publishers);
 
-        // update
+        //wait for the robots to reach the desired position
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+        for (auto &&subscriber : subscribers) {
+                rclcpp::spin_some(subscriber);
+                rclcpp::spin_some(subscriber);
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
+            rclcpp::spin_some(rc_subscriber_node);
+            rclcpp::spin_some(rc_subscriber_node);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            for (auto &&robot : robots) {
+                robot.X_k_real.push_back(gtsam::Pose2(robot_poses[robot.robot_id - 1].x, robot_poses[robot.robot_id - 1].y, robot_poses[robot.robot_id - 1].yaw));
+            }
+            centroid.X_k_real.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
         
-        
+        centroid.prev_X_k_optimized = centroid.X_k_fg;
+        centroid.all_fg_velocities.push_back(centroid.U_k_fg);
+
     } // end of main loop
 
     // ====================================================================================================

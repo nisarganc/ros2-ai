@@ -1,16 +1,15 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 response_list = [
     {
         "name": "publish_cmd_vel",
-        "description": "Publish cmd_vel message to control the movement of a turtlebot4 with marker-ids, including translation and rotation velocities",
+        "description": "Publish cmd_vel message to control the movement of a turtlebots with marker-ids, including translation and rotation velocities",
         "parameters": {
             "type": "object",
             "properties": {
                 "marker_id1": {
                     "type": "number",
-                    "description": "The Aruco id on top of a robot",
+                    "description": "The Aruco id on top of one of the robots",
                 },
                 "linear_x1": {
                     "type": "number",
@@ -22,7 +21,7 @@ response_list = [
                 },
                 "marker_id2": {
                     "type": "number",
-                    "description": "The Aruco id on top of a robot",
+                    "description": "The Aruco id on top of one of the robots",
                 },
                 "linear_x2": {
                     "type": "number",
@@ -34,7 +33,7 @@ response_list = [
                 },
                 "marker_id3": {
                     "type": "number",
-                    "description": "The Aruco id on top of a robot",
+                    "description": "The Aruco id on top of one of the robots",
                 },
                 "linear_x3": {
                     "type": "number",
@@ -54,11 +53,12 @@ response_list = [
                 "angular_z2",
                 "marker_id3",
                 "linear_x3",
-                "angular_z3",
+                "angular_z3"
 
-            ],
-        },
-    },
+            ]
+                
+        }
+    }
 ]
 
 

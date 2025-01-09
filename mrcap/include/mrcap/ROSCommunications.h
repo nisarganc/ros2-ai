@@ -98,6 +98,8 @@ public:
 private:
   void topicCallback(msgs_interfaces::msg::MarkerPoseArray::SharedPtr msg) {
     int robot_id = std::stoi(robot_id_);
+    // print robot_id
+    RCLCPP_INFO(this->get_logger(), "Robot ID: %s", robot_id_.c_str());
 
     // read image 
     aruco_image_msg = msg->image;
@@ -109,7 +111,8 @@ private:
         centroid_pose.y = msg->poses[i].y;
         centroid_pose.yaw = msg->poses[i].theta;
       }
-      else{
+      else if (msg->poses[i].id == robot_id)
+      {
         robot_poses[robot_id-1].x = msg->poses[i].x;
         robot_poses[robot_id-1].y = msg->poses[i].y;
         robot_poses[robot_id-1].yaw = msg->poses[i].theta;
@@ -193,7 +196,7 @@ public:
 
   }
 
-  void send_request(std::vector<RobotData> robots_poses, ROSPose centroid_pose, gtsam::Pose2 next_centroid_pose)
+  void send_request(std::vector<RobotData> robots_poses, ROSPose centroid_pose, gtsam::Pose2 next_centroid_pose, std::vector<std::shared_ptr<VelocityPublisher>> &publishers)
   {
     auto request = std::make_shared<msgs_interfaces::srv::GPT::Request>();
     for (auto &&robot : robots_poses) {
@@ -219,7 +222,7 @@ public:
         << "turtle4 with marker-id 20 is (" << turtle4.x << ", " << turtle4.y << ", " << turtle4.yaw << "), "
         << "and turtle6 with marker-id 30 is (" << turtle6.x << ", " << turtle6.y << ", " << turtle6.yaw << "). "
         << "The pose of manipulating object with marker-id 40 is (" << centroid_pose.x << ", " << centroid_pose.y << ", " << centroid_pose.yaw << "). "
-        << "Please return control commands of all turtles such that next pose of manipulating object with marker-id 40 is ("
+        << "Please return 'linear_x' and 'angular_z' for all turtles such that next pose of manipulating object with marker-id 40 is ("
         << next_centroid_pose.x() << ", " << next_centroid_pose.y() << ", " << next_centroid_pose.theta() << ").";
 
     request->poses_text = oss.str();
@@ -228,8 +231,28 @@ public:
     auto result = client_->async_send_request(request);
     
     try{
-      auto response = result.get();
-      RCLCPP_INFO(this->get_logger(), "Result of GPT: %s", response->response_text.c_str());
+        if (rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) == rclcpp::FutureReturnCode::SUCCESS) {
+          auto response = result.get();
+
+          double linear_x = 0;
+          double angular_z = 0;
+          for(int i = 0; i < robots_poses.size(); i++) {
+              if (i == 0){
+                  linear_x = response->response_linearx1;
+                  angular_z = response->response_angularz1;}
+              else if (i == 1){
+                  linear_x = response->response_linearx2;
+                  angular_z = response->response_angularz2;}
+              else if (i == 2){
+                  linear_x = response->response_linearx3;
+                  angular_z = response->response_angularz3;}
+              publishers[i]->publish(linear_x, angular_z);
+              RCLCPP_INFO(this->get_logger(), "Response from server: (linear_x, angular_z) ('%f', '%f')", linear_x, angular_z);
+            }
+        }
+        else {
+          RCLCPP_ERROR(this->get_logger(), "Failed to get response");
+        }
     } 
     catch (const std::exception& e) {
       RCLCPP_ERROR(this->get_logger(), "Failed to call service");
