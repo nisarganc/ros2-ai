@@ -5,7 +5,7 @@ Handle exception case where 0 marker is not detected
     - Fix the poses pulishing rate
 
 mrcap:
-- run optimizer only once?
+- robots should be always in touch with object, avoid slipping
 
 Response_behavior function: 
 - How to handle sync of control commands, time duration of execution and sequence of control commands. 
