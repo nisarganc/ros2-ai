@@ -281,27 +281,20 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion_vlm(Optimization_par
         // Conversion and assignment: LOOK AT THE CALCULATION
         centroid.X_k_fg = Utils::valuesToPose_mod(result, k, optimization_parameter, 0);
 
-        std::cout << "Returned Trajectory:" << std::endl;
-        for (size_t i = 0; i < centroid.X_k_fg.size(); ++i) {
+        std::cout << "Centroid ref trajectory:" << std::endl;
+        for (size_t i = k; i < centroid.X_k_fg.size(); ++i) {
             const auto& pose = centroid.X_k_fg[i];
-            std::cout << "Pose " << i + 1 << ": ";
+            std::cout << "Pose " << i << ": ";
             std::cout << "x = " << pose.x() << ", ";
             std::cout << "y = " << pose.y() << ", ";
             std::cout << "theta = " << pose.theta() << std::endl;
+
         }
 
         centroid.all_fg_poses.push_back(centroid.X_k_fg);
         centroid.U_k_fg = Utils::valuesToVelocity_mod(result, k, optimization_parameter, 0);
 
-        // print centroid.U_k_fg
-        std::cout << "Returned Velocity:" << std::endl;
-        for (size_t i = 0; i < centroid.U_k_fg.size(); ++i) {
-            const auto& velocity = centroid.U_k_fg[i];
-            std::cout << "Velocity " << i + 1 << ": ";
-            std::cout << "x = " << velocity.x() << ", ";
-            std::cout << "y = " << velocity.y() << ", ";
-            std::cout << "theta = " << velocity.theta() << std::endl;
-        }
+        // VALUE OF VELOCITY: centroid.U_k_fg could be used by VLM
 
         // publish updated reference centroid trajectory
         if (ROS_Enabled) {
@@ -315,15 +308,10 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion_vlm(Optimization_par
 
         vlm_service_client_node->send_request(robots, centroid_pose, centroid.X_k_fg[k+1], publishers);
 
-        //wait for the robots to reach the desired position
-        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-
         for (auto &&subscriber : subscribers) {
-                rclcpp::spin_some(subscriber);
                 rclcpp::spin_some(subscriber);
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
-            rclcpp::spin_some(rc_subscriber_node);
             rclcpp::spin_some(rc_subscriber_node);
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
             for (auto &&robot : robots) {

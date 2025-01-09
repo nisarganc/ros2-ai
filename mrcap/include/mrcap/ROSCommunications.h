@@ -98,8 +98,6 @@ public:
 private:
   void topicCallback(msgs_interfaces::msg::MarkerPoseArray::SharedPtr msg) {
     int robot_id = std::stoi(robot_id_);
-    // print robot_id
-    RCLCPP_INFO(this->get_logger(), "Robot ID: %s", robot_id_.c_str());
 
     // read image 
     aruco_image_msg = msg->image;
@@ -110,12 +108,16 @@ private:
         centroid_pose.x = msg->poses[i].x;
         centroid_pose.y = msg->poses[i].y;
         centroid_pose.yaw = msg->poses[i].theta;
+        // log centroid pose
+        RCLCPP_INFO(this->get_logger(), "Centroid: x=%f, y=%f, yaw=%f", centroid_pose.x, centroid_pose.y, centroid_pose.yaw);
       }
       else if (msg->poses[i].id == robot_id)
       {
         robot_poses[robot_id-1].x = msg->poses[i].x;
         robot_poses[robot_id-1].y = msg->poses[i].y;
         robot_poses[robot_id-1].yaw = msg->poses[i].theta;
+        // log robot poses
+        RCLCPP_INFO(this->get_logger(), "Robot %d: x=%f, y=%f, yaw=%f", robot_id, robot_poses[robot_id-1].x, robot_poses[robot_id-1].y, robot_poses[robot_id-1].yaw);
       }
 
       // Visualize the trajectory

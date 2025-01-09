@@ -5,13 +5,12 @@ Handle exception case where 0 marker is not detected
     - Fix the poses pulishing rate
 
 mrcap:
-Fix fg equation: no rotation while generating centroid control commands
-BUG: next centroid position from GTSAM
 
 Response_behavior function: 
 - How to handle sync of control commands, time duration of execution and sequence of control commands. 
 
 real world robots:
+Robot radius ignored in vlm
 check if robot frame and aruco frame coincide with each other?
 check if increasing k results in smooth traj?
 turtle4 and 6 are not executing control commands
