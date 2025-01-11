@@ -22,7 +22,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
 
             RobotMap[10] = 1;
             RobotMap[20] = 2;
-            RobotMap[30] = 3;
+            // RobotMap[30] = 3;
             RobotMap[40] = 40;
 
             cap = std::make_shared<cv::VideoCapture>(6);

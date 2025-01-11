@@ -32,10 +32,10 @@ struct ROSPose {
   double yaw;
 };
 
-std::vector<ROSPose> robot_poses(3);
+std::vector<ROSPose> robot_poses(2);
 ROSPose centroid_pose;
 
-ROSPose turtle2, turtle4, turtle6;
+ROSPose turtle2, turtle4;
 sensor_msgs::msg::Image aruco_image_msg;
 
 
@@ -161,9 +161,8 @@ public:
         turtle_id = 2;
     } else if (std::stoi(robot_id_) == 2) {
         turtle_id = 4;
-    } else if (std::stoi(robot_id_) == 3) {
-        turtle_id = 6;
-    } else {
+    } 
+    else {
         RCLCPP_ERROR(this->get_logger(), "Invalid robot_id: %s", robot_id_.c_str());
     }
     std::string turtle_id_ = std::to_string(turtle_id);
@@ -210,19 +209,14 @@ public:
         turtle4.x = robot.X_k_real.back().x();
         turtle4.y = robot.X_k_real.back().y();
         turtle4.yaw = robot.X_k_real.back().theta();
-      } else if (robot.robot_id == 3) {
-        turtle6.x = robot.X_k_real.back().x();
-        turtle6.y = robot.X_k_real.back().y();
-        turtle6.yaw = robot.X_k_real.back().theta();
       } 
       
     }
-    // request->poses_text = "Note that all poses follow this syntax (x, y, yaw) and yaw angle of robots can be between -pi to pi according to right hand tumb rule. The pose of turtle2 with marker-id 10 is ({}, {}, {}), turtle4 with marker-id 20 is ({}, {}, {}), and turtle6 with marker-id 30 is ({}, {}, {}). The pose of manipulating object with marker-id 40 is ({}, {}, {}). Please return control commands of all turtles such that next pose of manipulating object with marker-id 40 is ({}, {}, {}). "; 
+
     std::ostringstream oss;
     oss << "Note that all poses follow this syntax (x, y, yaw) and yaw angle of robots can be between -pi to pi according to right hand thumb rule. "
         << "The pose of turtle2 with marker-id 10 is (" << turtle2.x << ", " << turtle2.y << ", " << turtle2.yaw << "), "
         << "turtle4 with marker-id 20 is (" << turtle4.x << ", " << turtle4.y << ", " << turtle4.yaw << "), "
-        << "and turtle6 with marker-id 30 is (" << turtle6.x << ", " << turtle6.y << ", " << turtle6.yaw << "). "
         << "The pose of manipulating object with marker-id 40 is (" << centroid_pose.x << ", " << centroid_pose.y << ", " << centroid_pose.yaw << "). "
         << "Please return 'linear_x' and 'angular_z' for all turtles such that next pose of manipulating object with marker-id 40 is ("
         << next_centroid_pose.x() << ", " << next_centroid_pose.y() << ", " << next_centroid_pose.theta() << ").";
@@ -245,9 +239,9 @@ public:
               else if (i == 1){
                   linear_x = response->response_linearx2;
                   angular_z = response->response_angularz2;}
-              else if (i == 2){
-                  linear_x = response->response_linearx3;
-                  angular_z = response->response_angularz3;}
+              // else if (i == 2){
+              //     linear_x = response->response_linearx3;
+              //     angular_z = response->response_angularz3;}
               publishers[i]->publish(linear_x, angular_z);
               RCLCPP_INFO(this->get_logger(), "Response from server: (linear_x, angular_z) ('%f', '%f')", linear_x, angular_z);
             }

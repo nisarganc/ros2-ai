@@ -294,7 +294,15 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion_vlm(Optimization_par
         centroid.all_fg_poses.push_back(centroid.X_k_fg);
         centroid.U_k_fg = Utils::valuesToVelocity_mod(result, k, optimization_parameter, 0);
 
-        // VALUE OF VELOCITY: centroid.U_k_fg could be used by VLM
+        // print centroid.U_k_fg
+        std::cout << "Centroid ref velocity:" << std::endl;
+        for (size_t i = 0; i < centroid.U_k_fg.size(); ++i) {
+            const auto& velocity = centroid.U_k_fg[i];
+            std::cout << "Velocity " << i + 1 << ": ";
+            std::cout << "x = " << velocity.x() << ", ";
+            std::cout << "y = " << velocity.y() << ", ";
+            std::cout << "theta = " << velocity.theta() << std::endl;
+        }
 
         // publish updated reference centroid trajectory
         if (ROS_Enabled) {
@@ -306,21 +314,23 @@ std::pair<std::vector<RobotData>, CentroidData> PointMotion_vlm(Optimization_par
 
         //////////////////////////////////////// Multi-Robots Control ////////////////////////////////////////
 
-        vlm_service_client_node->send_request(robots, centroid_pose, centroid.X_k_fg[k+1], publishers);
 
-        for (auto &&subscriber : subscribers) {
-                rclcpp::spin_some(subscriber);
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
-            }
-            rclcpp::spin_some(rc_subscriber_node);
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            for (auto &&robot : robots) {
-                robot.X_k_real.push_back(gtsam::Pose2(robot_poses[robot.robot_id - 1].x, robot_poses[robot.robot_id - 1].y, robot_poses[robot.robot_id - 1].yaw));
-            }
-            centroid.X_k_real.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
+
+        // vlm_service_client_node->send_request(robots, centroid_pose, centroid.X_k_fg[k+1], publishers);
+
+        // for (auto &&subscriber : subscribers) {
+        //         rclcpp::spin_some(subscriber);
+        //         std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        //     }
+        //     rclcpp::spin_some(rc_subscriber_node);
+        //     std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        //     for (auto &&robot : robots) {
+        //         robot.X_k_real.push_back(gtsam::Pose2(robot_poses[robot.robot_id - 1].x, robot_poses[robot.robot_id - 1].y, robot_poses[robot.robot_id - 1].yaw));
+        //     }
+        //     centroid.X_k_real.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
         
-        centroid.prev_X_k_optimized = centroid.X_k_fg;
-        centroid.all_fg_velocities.push_back(centroid.U_k_fg);
+        // centroid.prev_X_k_optimized = centroid.X_k_fg;
+        // centroid.all_fg_velocities.push_back(centroid.U_k_fg);
 
     } // end of main loop
 

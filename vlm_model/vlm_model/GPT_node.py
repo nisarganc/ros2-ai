@@ -61,9 +61,9 @@ class GPTNode(Node):
             elif marker['marker_id'] == 20:
                 response.response_linearx2 = marker['linear_x']
                 response.response_angularz2 = marker['angular_z']
-            elif marker['marker_id'] == 30:
-                response.response_linearx3 = marker['linear_x']
-                response.response_angularz3 = marker['angular_z']
+            # elif marker['marker_id'] == 30:
+            #     response.response_linearx3 = marker['linear_x']
+            #     response.response_angularz3 = marker['angular_z']
 
         self.add_message_to_history(
             role="assistant",
