@@ -1,4 +1,4 @@
-# Zero-Shot Collaborative Loco-Manipulation using Vision-Language Models
+# Zero-Shot Collaborative Object Loco-Manipulation using Vision-Language Models
 
 ## Project Set-up
 ```bash
