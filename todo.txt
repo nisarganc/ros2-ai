@@ -1,6 +1,6 @@
 pose_estimation:
 Fix the webcam name instead of number
-Handle exception case where 0 marker is not detected
+Handle exception case when marker0 is not detected
     - Detect and estimate marker0 only once
     - Fix the poses pulishing rate
 publish obstacle poses
@@ -8,21 +8,21 @@ Improve marker labels
 
 Approach: multi-robot-push:
 - Given: dimensions of obstacle and object
-- Input: start and goal desciption: map cordinates
+- Input: start and goal desciption: in world cordinates
 - Centroid trajectory planning:
     - GTSAM centroid ref traj
-    - overlay trajectory and goal position
+    - overlay trajectory with direction vector arrow and goal position
 - mid level planning: 
-    - Think of a logic to trigger a VLM server call to deliver high-level switch contact point actions
-    - define high level switch_contacts actions
-    - robots should be always in touch with object to avoid slipping
+    - Think of a logic as to when to trigger a VLM server call to deliver high-level switch contact point actions
+    - define high level switch_contacts actions: 
+        - robot always faces normal to object
+        - right-centre, right-left, right-right, left-centre, left-left, left-right
     - GTSAM to generate trajectory for each hl actions? use Box 60.2*65.2 dimension to generate switch_contacts action trajectory->velocity commands.
-    - find nav controller
+    - find nav controller implementation
 - Low level controller
     - ROS2 cmd_vel with constant vel (1.0) and sleep (Ts_translation). Test how long does the specific box move.
 
-real world robots:
-Robot radius ignored in vlm
+Real world robots:
 check if robot frame and aruco frame coincide with each other?
 check if increasing k results in smooth traj?
 
