@@ -42,7 +42,9 @@ cd ..
 ```
 
 ## Run Project
-- ros2 launch turtles_bringup coloco_manipulation.launch.py
+```bash
+ros2 launch turtles_bringup coloco_manipulation.launch.py
+```
 
 ## Acknowledgements
 - Many thanks to the repository [ROS-LLM](https://github.com/Auromix/ROS-LLM).
