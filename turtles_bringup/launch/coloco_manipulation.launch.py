@@ -26,17 +26,5 @@ def generate_launch_description():
                 name="GPT_node",
                 output="screen",
             )
-            # Node(
-            #     package="input",
-            #     executable="llm_text_input_local",
-            #     name="llm_text_input_local",
-            #     output="screen",
-            # ),
-            # Node(
-            #     package="vlm_model",
-            #     executable="gpt",
-            #     name="gpt",
-            #     output="screen",
-            # )
         ]
     )

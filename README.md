@@ -1,15 +1,5 @@
 # Zero-Shot Collaborative Loco-Manipulation using Vision-Language Models
 
-## Project Set-up
-```bash
-  mkdir ros2-ai
-  cd ros2-ai
-  python -m venv objectpushing
-  source ~/ros2-ai/objectpushing/bin/activate
-  git clone https://github.com/nisarganc/ros2-ai.git src
-  colcon build --symlink-install
-```
-
 ## Project dependencies
 
 - **ROS2 Humble**
@@ -38,20 +28,21 @@ sudo make install
 echo 'export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}' >> ~/.bashrc
 echo 'export LD_LIBRARY_PATH=/usr/local/share:${LD_LIBRARY_PATH}' >> ~/.bashrc
 source ~/.bashrc
+cd ..
 ```
 
-## Turtles Random Walk   
-- ros2 launch turtles_bringup move_turtlebots.launch.py
+## Project Set-up
+```bash
+  mkdir coloco-manipulation
+  cd coloco-manipulation
+  python -m venv objectpushing
+  source ~/coloco-manipulation/objectpushing/bin/activate
+  git clone https://github.com/nisarganc/coloco-manipulation.git src
+  colcon build --symlink-install
+```
 
-## Turtles RGB input
-- ros2 launch turtles_bringup perception_turtlebots.launch.py
-
-## Turtles with LLM
-- ros2 launch turtles_bringup chatgpt_with_turtlebot.launch.py
-- ros2 topic pub /llm_input_message std_msgs/msg/String "data: 'Prompt message goes here'" -1
-
-## Multi-Robot Push
-- ros2 launch turtles_bringup multitb_push.launch.py
+## Run Project
+- ros2 launch turtles_bringup coloco_manipulation.launch.py
 
 ## Acknowledgements
 - Many thanks to the repository [ROS-LLM](https://github.com/Auromix/ROS-LLM).

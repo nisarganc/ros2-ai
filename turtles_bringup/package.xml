@@ -3,7 +3,7 @@
 <package format="3">
   <name>turtles_bringup</name>
   <version>0.0.1</version>
-  <description>ros2-ai bringup Package</description>
+  <description>coloco-manipulation bringup Package</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
   <license>TODO</license>
   
