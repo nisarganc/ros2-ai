@@ -1,26 +1,25 @@
 pose_estimation:
 - Change the webcam name instead of dynamic number
 - Decide a aruco_poses pulishing rate
-- Publish obstacle poses
 - Improve marker labels and axis  
 - can reduce markers dimension when 3D printing?
 - Remove waitkey(1) and imshow?
 - test theta values
 
 Approach: multi-robot-push:
-- Given: dimensions of obstacle and object
+TIMING AND DESCRITIZATION OF PATH
 - Input: start and goal desciption: in world cordinates
-- Centroid trajectory planning:
-    - GTSAM centroid ref traj
-    - overlay trajectory with direction vector arrow and goal position
-    - VLM server call to deliver high-level switch contact point actions
-    - define high level switch_contacts actions: 
-        - robot always faces normal to object
+START LOOP
+- Initial centroid trajectory planning:
+    - Overlay arrow from current object pose to goal pose
+    - VLM server call: Robot always faces normal to object. Compare object manipulation arrow direction with positioning of robots around objects. Take obstacles into account. Action switch required? 
+        - define high level switch_contact_points actions: 
         - right-centre, right-left, right-right, left-centre, left-left, left-right
     - GTSAM to generate trajectory for each hl actions? use Box 60.2*65.2 dimension to generate switch_contacts action trajectory->velocity commands.
     - find nav controller implementation
 - Low level controller
     - ROS2 cmd_vel with constant vel (1.0) and sleep (Ts_translation). Test how long does the specific box move.
+END LOOP
 
 Real world robots:
 check if robot frame and aruco frame coincide with each other?
