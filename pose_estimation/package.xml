@@ -3,7 +3,7 @@
 <package format="3">
   <name>pose_estimation</name>
   <version>0.0.1</version>
-  <description>ros2-ai package for aruco marker pose estimation</description>
+  <description>ros2 package for aruco marker pose estimation</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
   <license>TODO</license>
 

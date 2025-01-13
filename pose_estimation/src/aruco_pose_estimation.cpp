@@ -22,7 +22,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
 
             RobotMap[10] = 1;
             RobotMap[20] = 2;
-            // RobotMap[30] = 3;
+            RobotMap[30] = 3;
             RobotMap[40] = 40;
 
             cap = std::make_shared<cv::VideoCapture>(6);
@@ -41,13 +41,11 @@ class ArucoPoseEstimation : public rclcpp::Node {
 
             int image_width = 1920;
             int image_height = 1080;
-            // float fov = 95/2;
-            // float fovx = (image_width / image_height) * fov;
-            // float fovy = fov;
-            double fx = 1019.66062; //image_width / (2.0f * std::tan(fovx * M_PI / 360.0f));
-            double cx = 944.551199; //image_width / 2.0f;
-            double fy = 1021.42301; //image_height / (2.0f * std::tan(fovy * M_PI / 360.0f));
-            double cy = 460.701976; //image_height / 2.0f;
+
+            double fx = 1019.66062; 
+            double cx = 944.551199; 
+            double fy = 1021.42301; 
+            double cy = 460.701976; 
             cameraMatrix = (cv::Mat_<double>(3,3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
             distCoeffs = cv::Mat::zeros(1, 5, CV_32F);
             // distCoeffs.at<double>(0) = 0.08621978;
@@ -56,7 +54,10 @@ class ArucoPoseEstimation : public rclcpp::Node {
             // distCoeffs.at<double>(3) = -0.10166391;
             // distCoeffs.at<double>(4) = -0.06502892;
 
-            // rvec0_tvec0 = WorldFrame();
+            bool success = false;
+            while (!success) {
+                success = WorldFrame();
+            }
 
         }
 
@@ -65,32 +66,59 @@ class ArucoPoseEstimation : public rclcpp::Node {
         rclcpp::TimerBase::SharedPtr timer_;
         std::shared_ptr<cv::VideoCapture> cap;
         cv::Ptr<cv::aruco::Dictionary> dictionary;
-        cv::Mat cameraMatrix, distCoeffs;
-        //std::pair<cv::Mat, cv::Mat> rvec0_tvec0;
+        cv::Mat cameraMatrix, distCoeffs, T0, rvec, tvec, Ri, Ti, T_rel, rvec_rel, tvec_rel;
+        std::vector<int> markerIds;
+        std::vector<std::vector<cv::Point2f>> markerCorners;
+        std::vector<cv::Vec3d> rvecs, tvecs;
 
-        std::pair<cv::Mat, cv::Mat> WorldFrame() {
+        bool WorldFrame() {
+
             cv::Mat frame;
-            if (!cap->read(frame)) 
+            cv::Mat rvec0, tvec0, R0;
+
+            if (!cap->read(frame)) { 
                 RCLCPP_WARN(this->get_logger(), "Failed to capture frame");
-            
-            std::vector<int> markerIds;
-            std::vector<std::vector<cv::Point2f>> markerCorners;
-            std::vector<cv::Vec3d> rvecs, tvecs; 
-            cv::Mat rvec0, tvec0;
+                return false;
+            }
 
             cv::aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
+            
             if (!markerIds.empty()) {
+
                 cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.16, cameraMatrix, distCoeffs, rvecs, tvecs);                
 
                 for (size_t i = 0; i < markerIds.size(); ++i) {
                     if (markerIds[i] == 0) {
                         rvec0 = cv::Mat(rvecs[i]);
                         tvec0 = cv::Mat(tvecs[i]);
-                        return std::make_pair(rvec0, tvec0);
+
+                        // compute rotation matrix
+                        cv::Rodrigues(rvec0, R0);
+
+                        // create 4*4 transformation matrix
+                        T0 = cv::Mat::eye(4, 4, CV_64F);
+
+                        // Fill in rotation and translation for m0Xc
+                        R0.copyTo(T0.rowRange(0, 3).colRange(0, 3));
+                        tvec0.copyTo(T0.rowRange(0, 3).col(3));
+                        T0.at<double>(3, 0) = 0;
+                        T0.at<double>(3, 1) = 0;
+                        T0.at<double>(3, 2) = 0;
+
+                        // initialize matrices
+                        rvec = cv::Mat::zeros(3, 1, CV_64F);
+                        tvec = cv::Mat::zeros(3, 1, CV_64F);            
+                        Ri = cv::Mat::zeros(3, 3, CV_64F);
+                        Ti = cv::Mat::eye(4, 4, CV_64F);
+                        T_rel = cv::Mat::eye(4, 4, CV_64F);
+                        rvec_rel = cv::Mat::zeros(3, 1, CV_64F);
+                        tvec_rel = cv::Mat::zeros(3, 1, CV_64F);
+
+                        return true; 
                     }
                 }
             }
-            return std::make_pair(cv::Mat(), cv::Mat());
+            return false;
         }
 
         void PosesCallback() {
@@ -100,10 +128,6 @@ class ArucoPoseEstimation : public rclcpp::Node {
                 return;
             }
 
-            std::vector<int> markerIds;
-            std::vector<std::vector<cv::Point2f>> markerCorners;
-            std::vector<cv::Vec3d> rvecs, tvecs;
-            cv::Mat rvec0, tvec0;
             cv::aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
             
             if (!markerIds.empty()) {
@@ -113,35 +137,15 @@ class ArucoPoseEstimation : public rclcpp::Node {
 
                 for (int i = 0; i < markerIds.size(); ++i) {
                     if (markerIds[i] == 0) {
-                            rvec0 = cv::Mat(rvecs[i]);
-                            tvec0 = cv::Mat(tvecs[i]);
-                             cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
-                    }
-                }
-
-                for (int i = 0; i < markerIds.size(); ++i) {
-                    if (markerIds[i] == 0) {
                         continue;
                     }
-                    cv::Mat rvec = cv::Mat(rvecs[i]);
-                    cv::Mat tvec = cv::Mat(tvecs[i]);
+                    rvec = cv::Mat(rvecs[i]);
+                    tvec = cv::Mat(tvecs[i]);
 
                     // Compute rotation matrix
-                    cv::Mat R0, Ri;
-                    cv::Rodrigues(rvec0, R0);
                     cv::Rodrigues(rvec, Ri);
 
-                    // create 4*4 transformation matrix
-                    cv::Mat T0 = cv::Mat::eye(4, 4, CV_64F);
-                    cv::Mat Ti = cv::Mat::eye(4, 4, CV_64F);
-                    cv::Mat T_rel = cv::Mat::eye(4, 4, CV_64F);
-
                     // Fill in rotation and translation for m0Xc and m1Xc
-                    R0.copyTo(T0.rowRange(0, 3).colRange(0, 3));
-                    tvec0.copyTo(T0.rowRange(0, 3).col(3));
-                    T0.at<double>(3, 0) = 0;
-                    T0.at<double>(3, 1) = 0;
-                    T0.at<double>(3, 2) = 0;
                     Ri.copyTo(Ti.rowRange(0, 3).colRange(0, 3));
                     tvec.copyTo(Ti.rowRange(0, 3).col(3));
                     Ti.at<double>(3, 0) = 0;
@@ -149,9 +153,8 @@ class ArucoPoseEstimation : public rclcpp::Node {
                     Ti.at<double>(3, 2) = 0;
 
                     // Compute relative transformation
-                    T_rel = T0.inv() * Ti;                
+                    T_rel = T0.inv() * Ti;  
 
-                    cv::Mat rvec_rel, tvec_rel;
                     cv::Rodrigues(T_rel.rowRange(0, 3).colRange(0, 3), rvec_rel);
                     tvec_rel = T_rel.rowRange(0, 3).col(3);
                     msgs_interfaces::msg::MarkerPose marker_pose;
@@ -166,7 +169,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
                     marker_pose_array_msg.poses.push_back(marker_pose);
                 
                     cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
-                    cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
+                    // cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
                 }
 
                 marker_pose_array_msg.image = *cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
@@ -175,7 +178,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
             }
 
             cv::imshow("Aruco Markers", frame);
-            cv::waitKey(2);
+            cv::waitKey(1);
         }
 };
 

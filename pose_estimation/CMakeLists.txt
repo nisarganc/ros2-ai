@@ -16,8 +16,6 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(msgs_interfaces REQUIRED)
 
-include_directories(include)
-
 # Define the main executable
 add_executable(aruco_pose_node src/aruco_pose_estimation.cpp)
 
@@ -34,13 +32,9 @@ ament_target_dependencies(aruco_pose_node
 )
 
 ament_export_dependencies(msgs_interfaces)
-ament_export_include_directories(include)
 
 # Install targets and directories
 install(TARGETS aruco_pose_node
   DESTINATION lib/${PROJECT_NAME})
-
-install(DIRECTORY include/
-  DESTINATION include/${PROJECT_NAME})
 
 ament_package()
