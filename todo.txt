@@ -1,10 +1,10 @@
 pose_estimation:
 - Change the webcam name instead of dynamic number
-- Decide a aruco_poses pulishing rate
-- Improve marker labels and axis  
-- can reduce markers dimension when 3D printing?
+- Decide a aruco_poses pulishing and frame rate
 - Remove waitkey(1) and imshow?
-- test theta values
+- Can reduce markers dimension when 3D printing?
+- Goal arrow start point is the goal point
+- Better logic for ProjectGoalPose?
 
 Approach: multi-robot-push:
 - ToDo: TIMING AND DESCRITIZATION OF PATH
@@ -28,3 +28,7 @@ check if increasing k results in smooth traj?
 README.md:
 update requirements file for python
 update c++ packages requirements
+
+VLM Advantages:
+- Dynamic obstacles/scene
+- Different weights and shape of manipulating object

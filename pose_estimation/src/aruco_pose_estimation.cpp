@@ -11,10 +11,17 @@
 #include <iostream>
 #include <cmath>
 
+#include <map>
+#include <string>
+
 #include <msgs_interfaces/msg/marker_pose.hpp>
 #include <msgs_interfaces/msg/marker_pose_array.hpp>
 
+using namespace std;
 std::map<int, int> RobotMap;
+std::map<int, std::string> aruco_turtle;
+
+const double ARROW_LENGTH = 0.15;
 
 class ArucoPoseEstimation : public rclcpp::Node {
     public:
@@ -25,7 +32,13 @@ class ArucoPoseEstimation : public rclcpp::Node {
             RobotMap[30] = 3;
             RobotMap[40] = 40;
 
-            cap = std::make_shared<cv::VideoCapture>(6);
+            aruco_turtle[0] = "origin";
+            aruco_turtle[10] = "turtle2";
+            aruco_turtle[20] = "turtle4";
+            aruco_turtle[30] = "turtle6";
+            aruco_turtle[40] = "object";
+
+            cap = std::make_shared<cv::VideoCapture>(0);
             if (!cap->isOpened()) {
                 RCLCPP_ERROR(this->get_logger(), "Failed to open camera");
                 return;
@@ -56,8 +69,11 @@ class ArucoPoseEstimation : public rclcpp::Node {
 
             bool success = false;
             while (!success) {
+                RCLCPP_INFO(this->get_logger(), "Attempting World Frame Origin Detection");
                 success = WorldFrame();
             }
+
+            ProjectGoalPose(2.0, 1.0, -1.6);
 
         }
 
@@ -66,15 +82,15 @@ class ArucoPoseEstimation : public rclcpp::Node {
         rclcpp::TimerBase::SharedPtr timer_;
         std::shared_ptr<cv::VideoCapture> cap;
         cv::Ptr<cv::aruco::Dictionary> dictionary;
-        cv::Mat cameraMatrix, distCoeffs, T0, rvec, tvec, Ri, Ti, T_rel, rvec_rel, tvec_rel;
+        cv::Mat goal_pose, frame, cameraMatrix, distCoeffs, tvec0, rvec0, T0, rvec, tvec, Ri, Ti, T_rel, rvec_rel, tvec_rel;
         std::vector<int> markerIds;
         std::vector<std::vector<cv::Point2f>> markerCorners;
         std::vector<cv::Vec3d> rvecs, tvecs;
+        cv::Mat projectedGoalPoint2D, projectedArrowEndPoint2D;
 
         bool WorldFrame() {
 
-            cv::Mat frame;
-            cv::Mat rvec0, tvec0, R0;
+            cv::Mat R0;
 
             if (!cap->read(frame)) { 
                 RCLCPP_WARN(this->get_logger(), "Failed to capture frame");
@@ -114,6 +130,8 @@ class ArucoPoseEstimation : public rclcpp::Node {
                         rvec_rel = cv::Mat::zeros(3, 1, CV_64F);
                         tvec_rel = cv::Mat::zeros(3, 1, CV_64F);
 
+                        RCLCPP_INFO(this->get_logger(), "World Frame Found");
+
                         return true; 
                     }
                 }
@@ -121,8 +139,33 @@ class ArucoPoseEstimation : public rclcpp::Node {
             return false;
         }
 
+        void ProjectGoalPose(double x, double y, double yaw) {
+
+            // Convert goal pose to homogeneous coordinates
+            cv::Mat goalPoseHomogeneous = cv::Mat::ones(4, 1, CV_64F);
+            goalPoseHomogeneous.at<double>(0) = x;
+            goalPoseHomogeneous.at<double>(1) = y;
+            goalPoseHomogeneous.at<double>(2) = 0; // z
+
+            // Calculate the arrow's end in the world frame
+            cv::Mat arrowEndHomogeneous = cv::Mat::ones(4, 1, CV_64F);
+            arrowEndHomogeneous.at<double>(0) = x + ARROW_LENGTH * cos(yaw);
+            arrowEndHomogeneous.at<double>(1) = y + ARROW_LENGTH * sin(yaw);
+            arrowEndHomogeneous.at<double>(2) = 0;
+
+            // Transform the goal pose and arrow end into the camera coordinate system
+            cv::Mat goalPoseCamera = T0 * goalPoseHomogeneous;
+            cv::Mat arrowEndCamera = T0 * arrowEndHomogeneous;
+
+            // Project these points into the image
+            cv::projectPoints(goalPoseCamera.rowRange(0, 3).t(), cv::Mat::zeros(3, 1, CV_64F), 
+                            cv::Mat::zeros(3, 1, CV_64F), cameraMatrix, distCoeffs, projectedGoalPoint2D);
+            cv::projectPoints(arrowEndCamera.rowRange(0, 3).t(), cv::Mat::zeros(3, 1, CV_64F), 
+                            cv::Mat::zeros(3, 1, CV_64F), cameraMatrix, distCoeffs, projectedArrowEndPoint2D);
+        }
+
         void PosesCallback() {
-            cv::Mat frame;
+
             if (!cap->read(frame)) {
                 RCLCPP_WARN(this->get_logger(), "Failed to capture frame");
                 return;
@@ -136,40 +179,70 @@ class ArucoPoseEstimation : public rclcpp::Node {
                 msgs_interfaces::msg::MarkerPoseArray marker_pose_array_msg;
 
                 for (int i = 0; i < markerIds.size(); ++i) {
-                    if (markerIds[i] == 0) {
-                        continue;
+                    if (markerIds[i] != 0) {
+
+                        rvec = cv::Mat(rvecs[i]);
+                        tvec = cv::Mat(tvecs[i]);
+
+                        // Compute rotation matrix
+                        cv::Rodrigues(rvec, Ri);
+
+                        // Fill in rotation and translation for m0Xc and m1Xc
+                        Ri.copyTo(Ti.rowRange(0, 3).colRange(0, 3));
+                        tvec.copyTo(Ti.rowRange(0, 3).col(3));
+                        Ti.at<double>(3, 0) = 0;
+                        Ti.at<double>(3, 1) = 0;
+                        Ti.at<double>(3, 2) = 0;
+
+                        // Compute relative transformation
+                        T_rel = T0.inv() * Ti;  
+
+                        cv::Rodrigues(T_rel.rowRange(0, 3).colRange(0, 3), rvec_rel);
+                        tvec_rel = T_rel.rowRange(0, 3).col(3);
+                        msgs_interfaces::msg::MarkerPose marker_pose;
+                        marker_pose.id = RobotMap[markerIds[i]];
+                        marker_pose.x = tvec_rel.at<double>(0);
+                        marker_pose.y = tvec_rel.at<double>(1);
+
+                        // RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", tvec_rel.at<double>(0), tvec_rel.at<double>(1), tvec_rel.at<double>(2));
+                        // RCLCPP_INFO(this->get_logger(), "rvec_rel: %f %f %f", rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
+
+                        marker_pose.theta = rvec_rel.at<double>(2);
+                        marker_pose_array_msg.poses.push_back(marker_pose);
                     }
-                    rvec = cv::Mat(rvecs[i]);
-                    tvec = cv::Mat(tvecs[i]);
-
-                    // Compute rotation matrix
-                    cv::Rodrigues(rvec, Ri);
-
-                    // Fill in rotation and translation for m0Xc and m1Xc
-                    Ri.copyTo(Ti.rowRange(0, 3).colRange(0, 3));
-                    tvec.copyTo(Ti.rowRange(0, 3).col(3));
-                    Ti.at<double>(3, 0) = 0;
-                    Ti.at<double>(3, 1) = 0;
-                    Ti.at<double>(3, 2) = 0;
-
-                    // Compute relative transformation
-                    T_rel = T0.inv() * Ti;  
-
-                    cv::Rodrigues(T_rel.rowRange(0, 3).colRange(0, 3), rvec_rel);
-                    tvec_rel = T_rel.rowRange(0, 3).col(3);
-                    msgs_interfaces::msg::MarkerPose marker_pose;
-                    marker_pose.id = RobotMap[markerIds[i]];
-                    marker_pose.x = tvec_rel.at<double>(0);
-                    marker_pose.y = tvec_rel.at<double>(1);
-
-                    // RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", tvec_rel.at<double>(0), tvec_rel.at<double>(1), tvec_rel.at<double>(2));
-                    // RCLCPP_INFO(this->get_logger(), "rvec_rel: %f %f %f", rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
-
-                    marker_pose.theta = rvec_rel.at<double>(2);
-                    marker_pose_array_msg.poses.push_back(marker_pose);
                 
-                    cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
+                    // cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
                     // cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
+
+                    // custom detection marking
+                    cv::Point2f redPoint = markerCorners[i][3]; 
+                    cv::Point2f cornerPointx = markerCorners[i][2]; 
+                    cv::Point2f cornerPointy = markerCorners[i][0]; 
+                    cv::Point2f otherPoint = markerCorners[i][1];
+
+                    // calculate the centre point the border redpoint, cornerPointx, cornerPointy, otherPoint
+                    cv::Point2f centrePoint = (redPoint + cornerPointx + cornerPointy + otherPoint) / 4;
+                    cv::Point2f midy = (cornerPointy + otherPoint) / 2;
+                    cv::Point2f midx = (cornerPointx + otherPoint) / 2;
+
+                    // draw a red x, green y line, and a blue point for aruco markers 
+                    cv::arrowedLine(frame, centrePoint, midx, cv::Scalar(0, 0, 255), 3);
+                    cv::arrowedLine(frame, centrePoint, midy, cv::Scalar(0, 255, 0), 3);
+                    cv::circle(frame, centrePoint, 2, cv::Scalar(255, 0, 0), 6);
+                    cv::putText(frame, aruco_turtle[markerIds[i]], cornerPointy, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
+
+                    // Draw the goal pose and yaw arrow
+                    cv::Point goalPoint2D(
+                        static_cast<int>(projectedGoalPoint2D.at<double>(0)),
+                        static_cast<int>(projectedGoalPoint2D.at<double>(1))
+                    );
+                    cv::Point arrowEndPoint2D(
+                        static_cast<int>(projectedArrowEndPoint2D.at<double>(0)),
+                        static_cast<int>(projectedArrowEndPoint2D.at<double>(1))
+                    );
+                    cv::arrowedLine(frame, goalPoint2D, arrowEndPoint2D, cv::Scalar(255, 0, 255), 2, cv::LINE_AA, 0, 0.2);
+                    cv::putText(frame, "Goal", arrowEndPoint2D + cv::Point(5, -5), cv::FONT_HERSHEY_SIMPLEX, 1,
+                                cv::Scalar(255, 0, 255), 2);
                 }
 
                 marker_pose_array_msg.image = *cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();

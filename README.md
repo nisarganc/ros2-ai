@@ -1,4 +1,4 @@
-# Zero-Shot Collaborative Loco-Manipulation using Vision-Language Models
+# Scene Aware Zero-Shot Collaborative Loco-Manipulation using Vision-Language Models
 
 ## Project dependencies
 
@@ -39,6 +39,11 @@ cd ..
   source ~/coloco-manipulation/objectpushing/bin/activate
   git clone https://github.com/nisarganc/coloco-manipulation.git src
   colcon build --symlink-install
+```
+
+## Test Nodes
+```bash
+ros2 run pose_estimation aruco_pose_node
 ```
 
 ## Run Project
