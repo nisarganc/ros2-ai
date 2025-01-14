@@ -2,28 +2,24 @@ pose_estimation:
 - Change the webcam name instead of dynamic number
 - Decide a aruco_poses pulishing and frame rate
 - Remove waitkey(1) and imshow?
-- Can reduce markers dimension when 3D printing?
-- Goal arrow start point is the goal point
 - Better logic for ProjectGoalPose?
+- Draw yaw angle directions and range
+- Overlay arrow from current object pose to goal pose or think of diffusion models to gen traj on image
 
-Approach: multi-robot-push:
+mrcap:
+- clean the code setup and changes
+
+vlm_model:
 - ToDo: TIMING AND DESCRITIZATION OF PATH
-- Input: goal desciption: (x, y, yaw) in world cordinates
-START LOOP
-- Initial centroid trajectory planning:
-    - Overlay arrow from current object pose to goal pose
-    - VLM server call: Robot always faces normal to object. Compare object manipulation arrow direction with positioning of robots around objects. Take obstacles into account. Action switch required? 
-        - define high level switch_contact_points actions: 
-        - right-centre, right-left, right-right, left-centre, left-left, left-right
-    - GTSAM to generate trajectory for each hl actions? use Box 60.2*65.2 dimension to generate switch_contacts action trajectory->velocity commands.
-    - find nav controller implementation
-- Low level controller
-    - ROS2 cmd_vel with constant vel (1.0) and sleep (Ts_translation). Test how long does the specific box move.
-END LOOP
-
-Real world robots:
-check if robot frame and aruco frame coincide with each other?
-check if increasing k results in smooth traj?
+- START LOOP
+    - VLM call: 
+        - Robot always faces normal to object. Compare manipulation direction with positioning of robots around objects and the resultant force. Action switch required? 
+        - Define high level switch_contact_points actions: right-centre, right-left, right-right, left-centre, left-left, left-right
+        - How to asses scene obstacles/weight/friction into account?
+    - Low level controller each hl actions? 
+        - use Box 60.2*65.2 dimension to generate switch_contacts action trajectory->velocity commands.
+        - ROS2 cmd_vel with constant vel (1.0) and sleep (Ts_translation). Test how long does the specific box move.
+- END LOOP
 
 README.md:
 update requirements file for python
