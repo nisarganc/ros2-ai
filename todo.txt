@@ -7,8 +7,8 @@ pose_estimation:
 - test theta values
 
 Approach: multi-robot-push:
-TIMING AND DESCRITIZATION OF PATH
-- Input: start and goal desciption: in world cordinates
+- ToDo: TIMING AND DESCRITIZATION OF PATH
+- Input: goal desciption: (x, y, yaw) in world cordinates
 START LOOP
 - Initial centroid trajectory planning:
     - Overlay arrow from current object pose to goal pose
