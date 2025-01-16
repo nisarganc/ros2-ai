@@ -164,6 +164,12 @@ class ArucoPoseEstimation : public rclcpp::Node {
                             cv::Mat::zeros(3, 1, CV_64F), cameraMatrix, distCoeffs, projectedArrowEndPoint2D);
         }
 
+        void obstaclesDetection() {
+            // Detect obstacles
+
+        }
+
+
         void PosesCallback() {
 
             if (!cap->read(frame)) {

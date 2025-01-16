@@ -37,6 +37,17 @@ std::pair<gtsam::NonlinearFactorGraph, gtsam::Values> MultiRobotFG(
             double distance_to_obstacle = (centroid.X_k_ref[j].x() - obstacle.x) * (centroid.X_k_ref[j].x() - obstacle.x) + (centroid.X_k_ref[j].y() - obstacle.y) * (centroid.X_k_ref[j].y() - obstacle.y);
             // if so, set the weight to 1.0
             obstacle.w = (distance_to_obstacle < (sdf_.sys_radius_safety_radius_squared)) ? 1.0 : 0.0;
+
+        //     if ((cx + safety_radius >= obstacle.minX) &&
+        //        (cx - safety_radius <= obstacle.maxX) &&
+        //        (cy + safety_radius >= obstacle.minY) &&
+        //        (cy - safety_radius <= obstacle.maxY)) {
+        //        // If within expanded bounding box, set the weight to 1.0
+        //        obstacle.w = 1.0;
+        //    } else {
+        //        // If outside expanded bounding box, set the weight to 0.0
+        //        obstacle.w = 0.0;
+        //    }
         }
 
         gtsam::Symbol key_pos_c('C', j);

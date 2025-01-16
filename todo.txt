@@ -1,25 +1,28 @@
+
+
 pose_estimation:
 - Change the webcam name instead of dynamic number
 - Decide a aruco_poses pulishing and frame rate
 - Remove waitkey(1) and imshow?
 - Better logic for ProjectGoalPose?
 - Draw yaw angle directions and range
-- Overlay arrow from current object pose to goal pose or think of diffusion models to gen traj on image
+- implement ov object detection to obtain obstacles bounding boxes
+- segment manipulating object?
 
-mrcap:
+centroid planning/mrcap:
 - clean the code setup and changes
+- change gactor graph to consider obstacles bounding boxes
+- Overlay arrows from current pose to goal
 
-vlm_model:
-- ToDo: TIMING AND DESCRITIZATION OF PATH
-- START LOOP
-    - VLM call: 
-        - Robot always faces normal to object. Compare manipulation direction with positioning of robots around objects and the resultant force. Action switch required? 
-        - Define high level switch_contact_points actions: right-centre, right-left, right-right, left-centre, left-left, left-right
-        - How to asses scene obstacles/weight/friction into account?
-    - Low level controller each hl actions? 
+mr-planning/vlm_model:
+- ToDo: TIMING/ DESCRITIZATION OF PATH/ when to call VLM
+- VLM call: 
+    - Robot always faces normal to object. Compare manipulation direction with positioning of robots around objects and the resultant force. Action switch required? 
+    - Define high level switch_contact_points actions: right-centre, right-left, right-right, left-centre, left-left, left-right
+    - How to asses scene obstacles/weight/friction into account?
+- Low level controller each hl actions? 
         - use Box 60.2*65.2 dimension to generate switch_contacts action trajectory->velocity commands.
         - ROS2 cmd_vel with constant vel (1.0) and sleep (Ts_translation). Test how long does the specific box move.
-- END LOOP
 
 README.md:
 update requirements file for python
