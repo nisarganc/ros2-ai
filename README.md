@@ -4,19 +4,6 @@
 
 - **ROS2 Humble**
 
-- **GLEW and GLFW Dependencies:**
-```bash
-sudo apt-get install libglew-dev
-sudo apt-get install libglfw3-dev
-sudo apt install libxinerama-dev libxcursor-dev xinput libxi-dev
-git clone https://github.com/glfw/glfw
-cd glfw
-cmake -G "Unix Makefiles"
-make
-sudo make install
-cd ..
-```
-
 - **GTSAM Repository:**
 ```bash
 git clone https://github.com/borglab/gtsam.git
