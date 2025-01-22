@@ -1,24 +1,31 @@
-
+create a python env and run python files from env
+update citations
 
 pose_estimation:
-- Change the webcam name instead of dynamic number
-- Decide a aruco_poses pulishing and frame rate
-- Remove waitkey(1) and imshow?
-- Better logic for ProjectGoalPose?
-- Draw yaw angle directions and range
+- change the webcam name instead of dynamic number
+- webcam read fps: 5. Decide a aruco_poses pulishing and frame rate
+- remove waitkey(1) and imshow?
+- better logic for ProjectGoalPose?
+- draw yaw angle directions and range
 - implement ov object detection to obtain obstacles bounding boxes
-- segment manipulating object?
+- segment manipulating object
+- small object (box, differnt weight, t, rectangle, barral)
+- recording code for experiments 
 
 centroid planning/mrcap:
-- clean the code setup and changes
-- change gactor graph to consider obstacles bounding boxes
-- Overlay arrows from current pose to goal
+- decide publishing rate for ROS2Nodes, logic to switch in velocityPublisher, start these nodes
+- change gactor graph to consider obstacles bounding boxes from BBOX
+- contruct fg for switch mode trajectories
+- overlay arrows from current pose to goal
+- check time for translation/rotation
+- check ensure angle range
+- Complete optimizer.h code
 
 mr-planning/vlm_model:
 - ToDo: TIMING/ DESCRITIZATION OF PATH/ when to call VLM
 - VLM call: 
-    - Robot always faces normal to object. Compare manipulation direction with positioning of robots around objects and the resultant force. Action switch required? 
-    - Define high level switch_contact_points actions: right-centre, right-left, right-right, left-centre, left-left, left-right
+    - robot always faces normal to object. Compare manipulation direction with positioning of robots around objects and the resultant force. Action switch required? 
+    - define high level switch_contact_points actions: right-centre, right-left, right-right, left-centre, left-left, left-right
     - How to asses scene obstacles/weight/friction into account?
 - Low level controller each hl actions? 
         - use Box 60.2*65.2 dimension to generate switch_contacts action trajectory->velocity commands.
@@ -29,5 +36,5 @@ update requirements file for python
 update c++ packages requirements
 
 VLM Advantages:
-- Dynamic obstacles/scene
-- Different weights and shape of manipulating object
+- obstacles/scene
+- different weight and shape of manipulating object

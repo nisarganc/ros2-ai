@@ -15,9 +15,9 @@ def generate_launch_description():
                 output="screen",
             ),
             Node(
-                package="mrcap",
-                executable="mrcap_node",
-                name="mrcap_node",
+                package="optimizer",
+                executable="optimizer_node",
+                name="optimizer_node",
                 output="screen",
             ),
             Node(

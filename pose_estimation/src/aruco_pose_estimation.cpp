@@ -18,7 +18,6 @@
 #include <msgs_interfaces/msg/marker_pose_array.hpp>
 
 using namespace std;
-std::map<int, int> RobotMap;
 std::map<int, std::string> aruco_turtle;
 
 const double ARROW_LENGTH = 0.15;
@@ -27,18 +26,17 @@ class ArucoPoseEstimation : public rclcpp::Node {
     public:
         ArucoPoseEstimation() : Node("aruco_pose_node") {
 
-            RobotMap[10] = 1;
-            RobotMap[20] = 2;
-            RobotMap[30] = 3;
-            RobotMap[40] = 40;
-
             aruco_turtle[0] = "origin";
             aruco_turtle[10] = "turtle2";
             aruco_turtle[20] = "turtle4";
             aruco_turtle[30] = "turtle6";
             aruco_turtle[40] = "object";
 
-            cap = std::make_shared<cv::VideoCapture>(0);
+            cap = std::make_shared<cv::VideoCapture>(4);
+            // get fps of the camera
+            double fps = cap->get(cv::CAP_PROP_FPS);
+            RCLCPP_INFO(this->get_logger(), "Camera FPS: %f", fps);
+
             if (!cap->isOpened()) {
                 RCLCPP_ERROR(this->get_logger(), "Failed to open camera");
                 return;
@@ -73,7 +71,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
                 success = WorldFrame();
             }
 
-            ProjectGoalPose(2.0, 1.0, -1.6);
+            ProjectGoalPose(1.0, 3.0, -1.5);
 
         }
 
@@ -136,6 +134,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
                     }
                 }
             }
+
             return false;
         }
 
@@ -206,7 +205,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
                         cv::Rodrigues(T_rel.rowRange(0, 3).colRange(0, 3), rvec_rel);
                         tvec_rel = T_rel.rowRange(0, 3).col(3);
                         msgs_interfaces::msg::MarkerPose marker_pose;
-                        marker_pose.id = RobotMap[markerIds[i]];
+                        marker_pose.id = markerIds[i];
                         marker_pose.x = tvec_rel.at<double>(0);
                         marker_pose.y = tvec_rel.at<double>(1);
 
