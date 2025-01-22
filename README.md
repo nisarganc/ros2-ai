@@ -39,5 +39,5 @@ ros2 launch turtles_bringup coloco_manipulation.launch.py
 ```
 
 ## Acknowledgements
-- Many thanks to the repository [ROS-LLM](https://github.com/Auromix/ROS-LLM).
-- [MR.CAP](https://github.com/h2jaafar/mr.cap) for multi-robot planning and control algorithm.
+- [ROS-LLM](https://github.com/Auromix/ROS-LLM).
+- [MR.CAP](https://github.com/h2jaafar/mr.cap)

@@ -12,7 +12,7 @@ pose_estimation:
 - small object (box, differnt weight, t, rectangle, barral)
 - recording code for experiments 
 
-centroid planning/mrcap:
+centroid planning/gtsam:
 - decide publishing rate for ROS2Nodes, logic to switch in velocityPublisher, start these nodes
 - change gactor graph to consider obstacles bounding boxes from BBOX
 - contruct fg for switch mode trajectories
@@ -21,8 +21,8 @@ centroid planning/mrcap:
 - check ensure angle range
 - Complete optimizer.h code
 
-mr-planning/vlm_model:
-- ToDo: TIMING/ DESCRITIZATION OF PATH/ when to call VLM
+action-planning/vlm_model:
+- ToDo: TIMING/ DESCRITIZATION OF PATH/ when to query VLM?
 - VLM call: 
     - robot always faces normal to object. Compare manipulation direction with positioning of robots around objects and the resultant force. Action switch required? 
     - define high level switch_contact_points actions: right-centre, right-left, right-right, left-centre, left-left, left-right
