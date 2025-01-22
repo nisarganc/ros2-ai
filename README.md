@@ -3,8 +3,9 @@
 ## Project dependencies
 
 - **ROS2 Humble**
+- **Python and C++ requirements** 
 
-- **GTSAM Repository:**
+- **GTSAM Repository**
 ```bash
 git clone https://github.com/borglab/gtsam.git
 cd gtsam
@@ -28,16 +29,12 @@ cd ..
   colcon build --symlink-install
 ```
 
-## Test Nodes
-```bash
-ros2 run pose_estimation aruco_pose_node
-```
-
 ## Run Project
 ```bash
+ros2 run pose_estimation aruco_pose_node
 ros2 launch turtles_bringup coloco_manipulation.launch.py
 ```
 
 ## Acknowledgements
-- [ROS-LLM](https://github.com/Auromix/ROS-LLM).
+- [ROS-LLM](https://github.com/Auromix/ROS-LLM)
 - [MR.CAP](https://github.com/h2jaafar/mr.cap)
