@@ -12,8 +12,6 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/MarkerPose.msg"
-  "msg/MarkerPoseArray.msg"
   "srv/GPT.srv"
   DEPENDENCIES geometry_msgs sensor_msgs 
  )

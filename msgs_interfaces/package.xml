@@ -3,9 +3,9 @@
 <package format="3">
   <name>msgs_interfaces</name>
   <version>0.0.1</version>
-  <description>Messages and Interfaces for ros2-ai package</description>
+  <description>ToDo</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
-  <license>TODO</license>
+  <license>ToDo</license>
 
   <!-- Dependencies. -->
   <buildtool_depend>ament_cmake</buildtool_depend>

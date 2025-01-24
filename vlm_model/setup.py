@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer="Nisarga Nilavadi",
     maintainer_email="nisarga.nilavadi@utn.de",
-    description="The vlm package for ros2-ai",
+    description="ToDo",
     license="TODO",
     tests_require=["pytest"],
     entry_points={

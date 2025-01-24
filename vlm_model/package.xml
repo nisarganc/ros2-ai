@@ -3,9 +3,9 @@
 <package format="3">
   <name>vlm_model</name>
   <version>0.0.1</version>
-  <description>The vlm package for ros2-ai</description>
+  <description>ToDo</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
-  <license>TODO</license>
+  <license>ToDo</license>
 
   <depend>msgs_interfaces</depend>
 

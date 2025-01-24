@@ -1,26 +1,33 @@
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/image.hpp>
 
+// 1. Reads ArUco poses from the camera and stores them in turtle2, turtle4, turtle6, and centroid_pose.
+// 2. Projects the goal pose into the camera and stroes it in frame.
+
+#pragma once
+
+#include <rclcpp/rclcpp.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
-#include <cv_bridge/cv_bridge.h>
-
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include "std_msgs/msg/string.hpp"
+
 #include <vector>
 #include <iostream>
 #include <cmath>
-
 #include <map>
 #include <string>
 
-#include <msgs_interfaces/msg/marker_pose.hpp>
-#include <msgs_interfaces/msg/marker_pose_array.hpp>
-
-using namespace std;
-std::map<int, std::string> aruco_turtle;
-
+using std::placeholders::_1;
 const double ARROW_LENGTH = 0.15;
+
+std::map<int, std::string> aruco_turtle;
+struct ROSPose {
+  double x;
+  double y;
+  double yaw;
+};
+
+ROSPose turtle2, turtle4, turtle6, centroid_pose;
+cv::Mat goal_pose, frame;
 
 class ArucoPoseEstimation : public rclcpp::Node {
     public:
@@ -42,8 +49,8 @@ class ArucoPoseEstimation : public rclcpp::Node {
                 return;
             }
 
-            marker_pose_publisher_ = this->create_publisher<msgs_interfaces::msg::MarkerPoseArray>(
-                "aruco_poses", 10);
+            marker_pose_publisher_ = this->create_publisher<std_msgs::msg::String>(
+                "aruco_poses_stamp", 10);
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(100), 
                 std::bind(&ArucoPoseEstimation::PosesCallback, this));
@@ -76,11 +83,11 @@ class ArucoPoseEstimation : public rclcpp::Node {
         }
 
     private:
-        rclcpp::Publisher<msgs_interfaces::msg::MarkerPoseArray>::SharedPtr marker_pose_publisher_;
+        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr marker_pose_publisher_;
         rclcpp::TimerBase::SharedPtr timer_;
         std::shared_ptr<cv::VideoCapture> cap;
         cv::Ptr<cv::aruco::Dictionary> dictionary;
-        cv::Mat goal_pose, frame, cameraMatrix, distCoeffs, tvec0, rvec0, T0, rvec, tvec, Ri, Ti, T_rel, rvec_rel, tvec_rel;
+        cv::Mat cameraMatrix, distCoeffs, tvec0, rvec0, T0, rvec, tvec, Ri, Ti, T_rel, rvec_rel, tvec_rel;
         std::vector<int> markerIds;
         std::vector<std::vector<cv::Point2f>> markerCorners;
         std::vector<cv::Vec3d> rvecs, tvecs;
@@ -163,11 +170,6 @@ class ArucoPoseEstimation : public rclcpp::Node {
                             cv::Mat::zeros(3, 1, CV_64F), cameraMatrix, distCoeffs, projectedArrowEndPoint2D);
         }
 
-        void obstaclesDetection() {
-            // Detect obstacles
-
-        }
-
 
         void PosesCallback() {
 
@@ -181,7 +183,6 @@ class ArucoPoseEstimation : public rclcpp::Node {
             if (!markerIds.empty()) {
 
                 cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.16, cameraMatrix, distCoeffs, rvecs, tvecs);
-                msgs_interfaces::msg::MarkerPoseArray marker_pose_array_msg;
 
                 for (int i = 0; i < markerIds.size(); ++i) {
                     if (markerIds[i] != 0) {
@@ -204,16 +205,25 @@ class ArucoPoseEstimation : public rclcpp::Node {
 
                         cv::Rodrigues(T_rel.rowRange(0, 3).colRange(0, 3), rvec_rel);
                         tvec_rel = T_rel.rowRange(0, 3).col(3);
-                        msgs_interfaces::msg::MarkerPose marker_pose;
-                        marker_pose.id = markerIds[i];
-                        marker_pose.x = tvec_rel.at<double>(0);
-                        marker_pose.y = tvec_rel.at<double>(1);
-
+                        if (markerIds[i] == 10) {
+                            turtle2.x = tvec_rel.at<double>(0);
+                            turtle2.y = tvec_rel.at<double>(1);
+                            turtle2.yaw = rvec_rel.at<double>(2);
+                        } else if (markerIds[i] == 20) {
+                            turtle4.x = tvec_rel.at<double>(0);
+                            turtle4.y = tvec_rel.at<double>(1);
+                            turtle4.yaw = rvec_rel.at<double>(2);
+                        } else if (markerIds[i] == 30) {
+                            turtle6.x = tvec_rel.at<double>(0);
+                            turtle6.y = tvec_rel.at<double>(1);
+                            turtle6.yaw = rvec_rel.at<double>(2);
+                        } else if (markerIds[i] == 40) {
+                            centroid_pose.x = tvec_rel.at<double>(0);
+                            centroid_pose.y = tvec_rel.at<double>(1);
+                            centroid_pose.yaw = rvec_rel.at<double>(2);
+                        }
                         // RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", tvec_rel.at<double>(0), tvec_rel.at<double>(1), tvec_rel.at<double>(2));
                         // RCLCPP_INFO(this->get_logger(), "rvec_rel: %f %f %f", rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
-
-                        marker_pose.theta = rvec_rel.at<double>(2);
-                        marker_pose_array_msg.poses.push_back(marker_pose);
                     }
                 
                     // cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
@@ -250,19 +260,9 @@ class ArucoPoseEstimation : public rclcpp::Node {
                                 cv::Scalar(255, 0, 255), 2);
                 }
 
-                marker_pose_array_msg.image = *cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
-
-                marker_pose_publisher_->publish(marker_pose_array_msg);
             }
 
             cv::imshow("Aruco Markers", frame);
             cv::waitKey(1);
         }
 };
-
-int main(int argc, char *argv[]) {
-    rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<ArucoPoseEstimation>());
-    rclcpp::shutdown();
-    return 0;
-}

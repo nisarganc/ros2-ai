@@ -5,7 +5,7 @@
   <version>0.0.1</version>
   <description>coloco-manipulation bringup Package</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
-  <license>TODO</license>
+  <license>ToDo</license>
   
   <exec_depend>ros2launch</exec_depend>
 

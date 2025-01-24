@@ -3,9 +3,9 @@
 <package format="3">
   <name>optimizer</name>
   <version>0.0.1</version>
-  <description>ToDo:</description>
+  <description>ToDo</description>
   <maintainer email="nisarga.nilavadi@utn.de">Nisarga Nilavadi</maintainer>
-  <license>TODO</license>
+  <license>ToDo</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

@@ -1,18 +1,16 @@
 create a python env and run python files from env
 update citations
-
-pose_estimation:
-- change the webcam name instead of dynamic number
-- webcam read fps: 5. Decide a aruco_poses pulishing and frame rate
-- remove waitkey(1) and imshow?
-- better logic for ProjectGoalPose?
-- draw yaw angle directions and range
-- implement ov object detection to obtain obstacles bounding boxes
-- segment manipulating object
-- small object (box, differnt weight, t, rectangle, barral)
-- recording code for experiments 
+remove unnecessary headers
 
 centroid planning/gtsam:
+- change the webcam name instead of dynamic number
+- remove waitkey(1) and imshow?
+- better logic for ProjectGoalPose?
+- draw yaw angle directions and range (-pi to pi)
+- implement ov object detection to obtain obstacles bounding boxes and segment manipulating object
+- small object (box, t, rectangle, barral: all with different weight)
+- recording code for experiments 
+
 - decide publishing rate for ROS2Nodes, logic to switch in velocityPublisher, start these nodes
 - change gactor graph to consider obstacles bounding boxes from BBOX
 - contruct fg for switch mode trajectories

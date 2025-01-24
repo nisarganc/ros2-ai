@@ -31,8 +31,9 @@
 #include "FactorGraph.h"
 #include "SDF.h"
 
-#include "ros2nodes/RealTrajPublisher.h"
+#include <ros2nodes/ArucoPoseEstimation.h>
 #include "ros2nodes/GTsamTrajPublisher.h"
+#include "ros2nodes/RealTrajPublisher.h"
 #include "ros2nodes/VelocityPublisher.h"
 #include "ros2nodes/VLMService.h"
 
@@ -237,6 +238,7 @@ public:
 
             // publish updated reference centroid trajectory
             // ref_traj_publisher_node->publish();
+            
 
             result.clear();
 

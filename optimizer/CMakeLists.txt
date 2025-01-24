@@ -13,7 +13,8 @@ find_package(sensor_msgs REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(msgs_interfaces REQUIRED)
-find_package(pose_estimation REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(cv_bridge REQUIRED)
 
 # General settings
 set(CMAKE_CXX_STANDARD 17)
@@ -37,8 +38,9 @@ ament_target_dependencies(optimizer_node
   "GTSAM"
   "tf2"
   "msgs_interfaces"
-  "pose_estimation"
   "sensor_msgs"
+  "OpenCV"
+  "cv_bridge"
 )
 
 # Link to the third-party libraries with plain style

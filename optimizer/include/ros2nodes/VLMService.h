@@ -4,20 +4,16 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-
 #include "nav_msgs/msg/odometry.hpp"
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <nav_msgs/msg/path.hpp>
-
-#include <msgs_interfaces/msg/marker_pose.hpp>
-#include <msgs_interfaces/msg/marker_pose_array.hpp>
-#include <msgs_interfaces/srv/gpt.hpp>
-
-#include "datatypes/RobotData.h"
+#include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/msg/image.hpp>
 
-#include "RealTrajPublisher.h"
+#include <msgs_interfaces/srv/gpt.hpp>
+#include "datatypes/RobotData.h"
+#include "ArucoPoseEstimation.h"
 
 using std::placeholders::_1;
 
@@ -47,7 +43,7 @@ public:
         << next_centroid_pose.x() << ", " << next_centroid_pose.y() << ", " << next_centroid_pose.theta() << ").";
 
     request->poses_text = oss.str();
-    request->image = aruco_image_msg;
+    request->image = *cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
 
     auto result = client_->async_send_request(request);
     
