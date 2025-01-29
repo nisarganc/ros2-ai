@@ -32,14 +32,11 @@ int main(int argc, char * argv[])
   executor.add_node(turtle4_vel);
   // executor.add_node(turtle6_vel);
 
-  // start optimizer
-  Optimizer opt;
-  opt.startfg();
-
   executor.spin();
-
-  // Shutdown
+  
   rclcpp::shutdown();
   return 0;
+
+
 
 }

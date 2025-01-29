@@ -1,6 +1,7 @@
 create a python env and run python files from env
 update citations
 remove unnecessary headers
+add file purpose headers
 
 centroid planning/gtsam:
 - change the webcam name instead of dynamic number
@@ -9,7 +10,7 @@ centroid planning/gtsam:
 - draw yaw angle directions and range (-pi to pi)
 - implement ov object detection to obtain obstacles bounding boxes and segment manipulating object
 - small object (box, t, rectangle, barral: all with different weight)
-- recording code for experiments 
+- record code for experiments 
 
 - decide publishing rate for ROS2Nodes, logic to switch in velocityPublisher, start these nodes
 - change gactor graph to consider obstacles bounding boxes from BBOX

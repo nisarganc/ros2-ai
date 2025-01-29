@@ -6,10 +6,7 @@ namespace MotionModelArc
 {
     
     gtsam::Pose2 centroid_solveForNextPose(gtsam::Pose2 current_centroid_pose, gtsam::Pose2 current_centroid_speed) {
-        // Assuming Ts, r, and L are constants or change infrequently, pre-compute any dependent constants
-        // and pass them as parameters to this function to avoid recalculating them every call
 
-        // Extract current pose and speed values only once
         const double x_now = current_centroid_pose.x();
         const double y_now = current_centroid_pose.y();
         double theta_now = Utils::ensure_orientation_range(current_centroid_pose.theta());
@@ -23,26 +20,17 @@ namespace MotionModelArc
         double y_next = y_now;
         double theta_next = theta_now;
 
-        x_next += x_dot * 1.0; // ToDo: time_for_translation;
-        y_next += y_dot * 1.0; // ToDo: time_for_translation;
-        theta_next = theta_dot * 1.0; // ToDo: time_for_centroid_rotation;
+        x_next += x_dot * 8.0; // ToDo: time_for_translation;
+        y_next += y_dot * 8.0; // ToDo: time_for_translation;
+        theta_next = theta_dot * 8.0; // ToDo: time_for_centroid_rotation;
 
         return gtsam::Pose2(x_next, y_next, theta_next);
     }
 
-    /**
-    * @brief get an arc from two points, with the heading of X_now tangent to circle
-    * @param X_now: current pose
-    * @param X_next: next pose
-    * @param v: velocity
-    * @param L: wheelbase
-    * @param r: radius of the wheels
-    * @return gtsam::Pose2: Wheel velocities (left and right)
-    */
     gtsam::Pose2 centroid_solveForControl(gtsam::Pose2 current_centroid_pose, gtsam::Pose2 next_centroid_pose)
     {
         // ToDo: Find out the time for ros2 cmd_vel command (control freq of tb4)
-        double Ts = 1.0;
+        double Ts = 8.0;
         
         double x_now = current_centroid_pose.x();
         double y_now = current_centroid_pose.y();

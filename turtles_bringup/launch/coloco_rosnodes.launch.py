@@ -10,14 +10,8 @@ def generate_launch_description():
         [
             Node(
                 package="optimizer",
-                executable="optimizer",
-                name="optimizer",
-                output="screen",
-            ),
-            Node(
-                package="vlm_model",
-                executable="GPT_node",
-                name="GPT_node",
+                executable="ros_nodes",
+                name="ros_nodes",
                 output="screen",
             )
         ]

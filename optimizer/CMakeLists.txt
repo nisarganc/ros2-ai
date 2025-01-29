@@ -6,7 +6,6 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(gazebo_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -25,14 +24,29 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/include)
 
 # Define the main executable
-add_executable(optimizer_node src/main.cpp)
+add_executable(ros_nodes src/ros_nodes.cpp)
+add_executable(optimizer src/optimizer.cpp)
 
 # Depend on ROS 2 and other necessary libraries
-ament_target_dependencies(optimizer_node
+ament_target_dependencies(ros_nodes
   "rclcpp"
   "std_msgs"
   "geometry_msgs"
-  "gazebo_msgs"
+  "nav_msgs"
+  "visualization_msgs"
+  "GTSAM"
+  "tf2"
+  "msgs_interfaces"
+  "sensor_msgs"
+  "OpenCV"
+  "cv_bridge"
+)
+
+# Depend on ROS 2 and other necessary libraries
+ament_target_dependencies(optimizer
+  "rclcpp"
+  "std_msgs"
+  "geometry_msgs"
   "nav_msgs"
   "visualization_msgs"
   "GTSAM"
@@ -44,10 +58,11 @@ ament_target_dependencies(optimizer_node
 )
 
 # Link to the third-party libraries with plain style
-target_link_libraries(optimizer_node gtsam)
+target_link_libraries(ros_nodes gtsam)
+target_link_libraries(optimizer gtsam)
 
 # Install targets and directories
-install(TARGETS optimizer_node
+install(TARGETS ros_nodes optimizer
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY include/

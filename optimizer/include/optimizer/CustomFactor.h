@@ -10,13 +10,11 @@ using namespace gtsam;
 #include <gtsam/slam/BoundingConstraint.h>
 #include "MotionModelArc.h"
 #include "datatypes/Atan2LUT.h"
-#include "SDF.h"
-
 // #include <boost/optional.hpp>
 // #include <boost/make_shared.hpp>
 
-
 extern Atan2LUT lut;
+double error_scale_ternary = 1.0;
 
 class TernaryFactorStateEstimation : public gtsam::NoiseModelFactor3<gtsam::Pose2, gtsam::Pose2, gtsam::Pose2> {
 private:
@@ -34,10 +32,9 @@ public:
     }
 
     gtsam::Vector evaluateError(const gtsam::Pose2& X_now, const gtsam::Pose2& U_now, const gtsam::Pose2& X_next, boost::optional<gtsam::Matrix&> H1 = boost::none, boost::optional<gtsam::Matrix&> H2 = boost::none, boost::optional<gtsam::Matrix&> H3 = boost::none) const {
-        double dt = 1.0; // ToDo: time_for_translation;
+        double dt = 8.0; // ToDo: time_for_translation;
 
         gtsam::Matrix H1_, H2_, H3_;
-        double error_scale_ternary = 1.0;
         computeScaledJacobians(error_scale_ternary, dt, H1_, H2_, H3_);
 
         if (H1)

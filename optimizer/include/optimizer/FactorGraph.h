@@ -1,5 +1,4 @@
 #pragma once
-#include "SDF.h"
 
 struct NoiseModels {
     gtsam::noiseModel::Diagonal::shared_ptr covariance_X;

@@ -17,7 +17,7 @@
 #include <string>
 
 using std::placeholders::_1;
-const double ARROW_LENGTH = 0.15;
+const double ARROW_LENGTH = 0.1;
 
 std::map<int, std::string> aruco_turtle;
 struct ROSPose {
@@ -28,6 +28,8 @@ struct ROSPose {
 
 ROSPose turtle2, turtle4, turtle6, centroid_pose;
 cv::Mat goal_pose, frame;
+bool traj_generated = false;
+std::vector<std::tuple<double, double, double>> traj_pose_2d;
 
 class ArucoPoseEstimation : public rclcpp::Node {
     public:
@@ -51,9 +53,9 @@ class ArucoPoseEstimation : public rclcpp::Node {
 
             marker_pose_publisher_ = this->create_publisher<std_msgs::msg::String>(
                 "aruco_poses_stamp", 10);
-            timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(100), 
-                std::bind(&ArucoPoseEstimation::PosesCallback, this));
+            // timer_ = this->create_wall_timer(
+            //     std::chrono::milliseconds(100), 
+            //     std::bind(&ArucoPoseEstimation::PosesCallback, this));
 
             dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_50);
 
@@ -82,7 +84,6 @@ class ArucoPoseEstimation : public rclcpp::Node {
 
         }
 
-    private:
         rclcpp::Publisher<std_msgs::msg::String>::SharedPtr marker_pose_publisher_;
         rclcpp::TimerBase::SharedPtr timer_;
         std::shared_ptr<cv::VideoCapture> cap;
@@ -91,7 +92,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
         std::vector<int> markerIds;
         std::vector<std::vector<cv::Point2f>> markerCorners;
         std::vector<cv::Vec3d> rvecs, tvecs;
-        cv::Mat projectedGoalPoint2D, projectedArrowEndPoint2D;
+        cv::Mat projectedGoalPoint2D, projectedGoalEndPoint2D;
 
         bool WorldFrame() {
 
@@ -154,20 +155,20 @@ class ArucoPoseEstimation : public rclcpp::Node {
             goalPoseHomogeneous.at<double>(2) = 0; // z
 
             // Calculate the arrow's end in the world frame
-            cv::Mat arrowEndHomogeneous = cv::Mat::ones(4, 1, CV_64F);
-            arrowEndHomogeneous.at<double>(0) = x + ARROW_LENGTH * cos(yaw);
-            arrowEndHomogeneous.at<double>(1) = y + ARROW_LENGTH * sin(yaw);
-            arrowEndHomogeneous.at<double>(2) = 0;
+            cv::Mat goalEndHomogeneous = cv::Mat::ones(4, 1, CV_64F);
+            goalEndHomogeneous.at<double>(0) = x + ARROW_LENGTH * cos(yaw);
+            goalEndHomogeneous.at<double>(1) = y + ARROW_LENGTH * sin(yaw);
+            goalEndHomogeneous.at<double>(2) = 0;
 
             // Transform the goal pose and arrow end into the camera coordinate system
             cv::Mat goalPoseCamera = T0 * goalPoseHomogeneous;
-            cv::Mat arrowEndCamera = T0 * arrowEndHomogeneous;
+            cv::Mat goalEndCamera = T0 * goalEndHomogeneous;
 
             // Project these points into the image
             cv::projectPoints(goalPoseCamera.rowRange(0, 3).t(), cv::Mat::zeros(3, 1, CV_64F), 
                             cv::Mat::zeros(3, 1, CV_64F), cameraMatrix, distCoeffs, projectedGoalPoint2D);
-            cv::projectPoints(arrowEndCamera.rowRange(0, 3).t(), cv::Mat::zeros(3, 1, CV_64F), 
-                            cv::Mat::zeros(3, 1, CV_64F), cameraMatrix, distCoeffs, projectedArrowEndPoint2D);
+            cv::projectPoints(goalEndCamera.rowRange(0, 3).t(), cv::Mat::zeros(3, 1, CV_64F), 
+                            cv::Mat::zeros(3, 1, CV_64F), cameraMatrix, distCoeffs, projectedGoalEndPoint2D);
         }
 
 
@@ -222,8 +223,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
                             centroid_pose.y = tvec_rel.at<double>(1);
                             centroid_pose.yaw = rvec_rel.at<double>(2);
                         }
-                        // RCLCPP_INFO(this->get_logger(), "t_rel: %f %f %f", tvec_rel.at<double>(0), tvec_rel.at<double>(1), tvec_rel.at<double>(2));
-                        // RCLCPP_INFO(this->get_logger(), "rvec_rel: %f %f %f", rvec_rel.at<double>(0), rvec_rel.at<double>(1), rvec_rel.at<double>(2));
+                        RCLCPP_INFO(this->get_logger(), "marker: %d %f %f %f", markerIds[i], tvec_rel.at<double>(0), tvec_rel.at<double>(1), rvec_rel.at<double>(2));
                     }
                 
                     // cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
@@ -242,7 +242,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
 
                     // draw a red x, green y line, and a blue point for aruco markers 
                     cv::arrowedLine(frame, centrePoint, midx, cv::Scalar(0, 0, 255), 3);
-                    cv::arrowedLine(frame, centrePoint, midy, cv::Scalar(0, 255, 0), 3);
+                    // cv::arrowedLine(frame, centrePoint, midy, cv::Scalar(0, 255, 0), 3);
                     cv::circle(frame, centrePoint, 2, cv::Scalar(255, 0, 0), 6);
                     cv::putText(frame, aruco_turtle[markerIds[i]], cornerPointy, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 
@@ -251,18 +251,55 @@ class ArucoPoseEstimation : public rclcpp::Node {
                         static_cast<int>(projectedGoalPoint2D.at<double>(0)),
                         static_cast<int>(projectedGoalPoint2D.at<double>(1))
                     );
-                    cv::Point arrowEndPoint2D(
-                        static_cast<int>(projectedArrowEndPoint2D.at<double>(0)),
-                        static_cast<int>(projectedArrowEndPoint2D.at<double>(1))
+                    cv::Point goalEndPoint2D(
+                        static_cast<int>(projectedGoalEndPoint2D.at<double>(0)),
+                        static_cast<int>(projectedGoalEndPoint2D.at<double>(1))
                     );
-                    cv::arrowedLine(frame, goalPoint2D, arrowEndPoint2D, cv::Scalar(255, 0, 255), 2, cv::LINE_AA, 0, 0.2);
-                    cv::putText(frame, "Goal", arrowEndPoint2D + cv::Point(5, -5), cv::FONT_HERSHEY_SIMPLEX, 1,
-                                cv::Scalar(255, 0, 255), 2);
+                    cv::arrowedLine(frame, goalPoint2D, goalEndPoint2D, cv::Scalar(0, 0, 255), 2, cv::LINE_AA, 0, 0.2);
+                    cv::putText(frame, "Goal", goalEndPoint2D + cv::Point(5, -5), cv::FONT_HERSHEY_SIMPLEX, 1,
+                                cv::Scalar(0, 0, 255), 2);
+
+                    if (traj_generated) {
+                        std::cout << "Drawing trajectory" << std::endl;
+                        for (const auto& [x, y, yaw] : traj_pose_2d) {
+                            cv::Mat trajPointHomogeneous = cv::Mat::ones(4, 1, CV_64F);
+                            trajPointHomogeneous.at<double>(0) = x;
+                            trajPointHomogeneous.at<double>(1) = y;
+                            trajPointHomogeneous.at<double>(2) = 0;  // z
+
+                            cv::Mat trajEndPointHomogeneous = cv::Mat::ones(4, 1, CV_64F);
+                            trajEndPointHomogeneous.at<double>(0) = x + ARROW_LENGTH * cos(yaw);
+                            trajEndPointHomogeneous.at<double>(1) = y + ARROW_LENGTH * sin(yaw);
+                            trajEndPointHomogeneous.at<double>(2) = 0;
+
+                            cv::Mat trajPointCamera = T0 * trajPointHomogeneous;
+                            cv::Mat trajEndPointCamera = T0 * trajEndPointHomogeneous;
+                            cv::Mat projectedTrajPoint2D, projectedTrajEndPoint2D;
+
+                            cv::projectPoints(trajPointCamera.rowRange(0, 3).t(), cv::Mat::zeros(3, 1, CV_64F),
+                                            cv::Mat::zeros(3, 1, CV_64F), cameraMatrix, distCoeffs, projectedTrajPoint2D);
+                            cv::projectPoints(trajEndPointCamera.rowRange(0, 3).t(), cv::Mat::zeros(3, 1, CV_64F),
+                                            cv::Mat::zeros(3, 1, CV_64F), cameraMatrix, distCoeffs, projectedTrajEndPoint2D); 
+
+                            cv::Point trajPoint2D(
+                                static_cast<int>(projectedTrajPoint2D.at<double>(0)),
+                                static_cast<int>(projectedTrajPoint2D.at<double>(1))
+                            );
+                            cv::Point trajEndPoint2D(
+                                static_cast<int>(projectedTrajEndPoint2D.at<double>(0)),
+                                static_cast<int>(projectedTrajEndPoint2D.at<double>(1))
+                            );
+
+                            cv::circle(frame, trajPoint2D, 2, cv::Scalar(255, 0, 0), 6);
+                            cv::arrowedLine(frame, trajPoint2D, trajEndPoint2D, cv::Scalar(0, 0, 255), 2, cv::LINE_AA, 0, 0.2);
+                            
+                        }
+                    }
                 }
 
             }
 
             cv::imshow("Aruco Markers", frame);
-            cv::waitKey(1);
+            cv::waitKey(0);
         }
 };

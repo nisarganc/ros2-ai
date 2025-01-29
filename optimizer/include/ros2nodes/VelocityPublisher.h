@@ -13,7 +13,7 @@
 
 using std::placeholders::_1;
 
-int traj_mode=0;
+int traj_mode=1; // stop is 0, push is 1, go back is 2, adjust position is 3
 
 using namespace std::chrono_literals;
 class VelocityPublisher : public rclcpp::Node {
@@ -23,7 +23,7 @@ public:
   {
     publisher_ = this->create_publisher<geometry_msgs::msg::Twist>( "/" +robot_ + "/cmd_vel", 10);
     timer_ = this->create_wall_timer(
-      500ms, std::bind(&VelocityPublisher::publish, this));
+      100ms, std::bind(&VelocityPublisher::publish, this));
   }
 
   void publish()
@@ -31,10 +31,18 @@ public:
     geometry_msgs::msg::Twist twist;
     if (traj_mode == 0){
       twist.linear.x = 0.0;
-      twist.angular.z = 0.1;
+      twist.angular.z = 0.0;
     }
-    else{
-      twist.linear.x = 0.1;
+    else if (traj_mode == 1){
+      twist.linear.x = 0.05;
+      twist.angular.z = 0.0;
+    }
+    else if (traj_mode == 2){
+      twist.linear.x = -0.1;
+      twist.angular.z = 0.0;
+    }
+    else if (traj_mode == 3){
+      twist.linear.x = 0.05;
       twist.angular.z = 0.0;
     }
       publisher_->publish(twist);

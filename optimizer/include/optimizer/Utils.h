@@ -133,6 +133,13 @@ namespace Utils
         }
 
         returned_trajectory.push_back(pose);
+
+        // print the trajectory
+        std::cout << "GT Pose " << i << ": ";
+        std::cout << "x = " << pose.x() << ", ";
+        std::cout << "y = " << pose.y() << ", ";
+        std::cout << "theta = " << pose.theta() << std::endl;
+
     }
 
     return returned_trajectory;

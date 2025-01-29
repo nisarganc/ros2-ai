@@ -25,17 +25,13 @@
 #include <gtsam/inference/Ordering.h>
 
 // headers
+#include "SDF.h"
 #include "CustomFactor.h"
 #include "Trajectory.h"
 #include "datatypes/RobotData.h"
 #include "FactorGraph.h"
-#include "SDF.h"
 
-#include <ros2nodes/ArucoPoseEstimation.h>
-#include "ros2nodes/GTsamTrajPublisher.h"
-#include "ros2nodes/RealTrajPublisher.h"
-#include "ros2nodes/VelocityPublisher.h"
-#include "ros2nodes/VLMService.h"
+#include "ros2nodes/ArucoPoseEstimation.h"
 
 #include "datatypes/CovarianceInfo.h"
 // #include "DataTypes/Atan2LUT.h"
@@ -66,8 +62,8 @@ public:
         std::vector<double> solver_parameters = {2000, 0.1, 0.1, 0.1, 3};
 
         std::vector<CovariancePreset> covariancePresets = {
-        //                     Name             x0,x1,x2,t0,t1,t2,o0,o1,o2,p0,    p1,   p2,     u0,   u1   
-            CovariancePreset("Default", 1,1,0.2,  0.001,0.001,0, 0.1,0,0,  0.001,0.001, 0.01,   1.0, 1.0),  
+        //                     Name     x0,x1,x2, t0,t1,t2, o0,o1,o2,p0,p1,p2, u0,u1   
+            CovariancePreset("Default", 1,1,0.2, 0.001,0.001,0, 0.1,0,0, 0.001,0.001,0.01, 1.0,1.0),  
             // Add more presets as required.
         };
         double covariance_X[3] = {covariancePresets[0].covX[0], covariancePresets[0].covX[1], covariancePresets[0].covX[2]};
@@ -114,18 +110,17 @@ public:
 
         // experimental variables
         int k;
-        int max_states = 20;
-        int nr_of_robots = 2;
+        int max_states = 10;
+        int nr_of_robots = 1;
         gtsam::Pose2 ref_traj_end_pose(1.0, 3.0, -1.5);
 
-        // obstacles information
-        SDF_s sdf_s; 
+        // obstacles information 
         int nr_of_obstacles = 2;
 
         // Environment Information
+        SDF_s sdf_s;
         sdf_s.obstacles.reserve(nr_of_obstacles);
-        sdf_s.obstacles.push_back(obstacle(1.5, 1.78, 2.0));
-        sdf_s.obstacles.push_back(obstacle(2.2, 1, 2.7));
+        sdf_s.obstacles.push_back(obstacle(0.84, 2.7, 0));
         sdf_s.system_radius = 0.5; //ToDO: Estimate the centroid system radius
         sdf_s.inv_system_radius = 1.0 / sdf_s.system_radius;
         sdf_s.system_radius_squared = sdf_s.system_radius * sdf_s.system_radius;
@@ -140,10 +135,16 @@ public:
         // ROS2 variables
         CentroidData centroid;
 
-        // After the initialization of the ROS2 nodes, the following code is executed
+        // initialization of the ROS2 node
+        rclcpp::init(0, nullptr);
+        auto aruco_pnode = std::make_shared<ArucoPoseEstimation>();
+        aruco_pnode->PosesCallback();
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+        // print centroid_pose
+        std::cout << "centroid position: " << centroid_pose.x << ", " << centroid_pose.y << ", " << centroid_pose.yaw << std::endl;
         centroid.X_k_real.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
         centroid.X_k_modelled.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
-        std::cout << "centroid position: " << centroid_pose.x << ", " << centroid_pose.y << ", " << centroid_pose.yaw << std::endl;
         
         // computing centroid reference trajectory
         gtsam::Pose2 ref_traj_start_pose; 
@@ -157,6 +158,8 @@ public:
         // assign the reference trajectory to centroid object
         for (int k = 0; k <= max_states; k++) {
             centroid.X_k_ref.push_back(X_ref.get_ref_pose(k));
+            // print the reference trajectory
+            std::cout << "Reference trajectory: " << centroid.X_k_ref[k].x() << ", " << centroid.X_k_ref[k].y() << ", " << centroid.X_k_ref[k].theta() << std::endl;
         }
 
         // assign thr Centroid reference control 
@@ -215,26 +218,16 @@ public:
 
             std::cout << "Centroid gtsam trajectory:" << std::endl;
             for (size_t i = k; i < centroid.X_k_fg.size(); ++i) {
-                const auto& pose = centroid.X_k_fg[i];
-                std::cout << "Pose " << i << ": ";
-                std::cout << "x = " << pose.x() << ", ";
-                std::cout << "y = " << pose.y() << ", ";
-                std::cout << "theta = " << pose.theta() << std::endl;
-
+                traj_pose_2d.push_back(std::make_tuple(centroid.X_k_fg[i].x(), centroid.X_k_fg[i].y(), centroid.X_k_fg[i].theta()));
             }
+            traj_generated = true;
+            aruco_pnode->PosesCallback();
+
+            //clear traj_pose_2d
+            traj_pose_2d.clear();
 
             centroid.all_fg_poses.push_back(centroid.X_k_fg);
             centroid.U_k_fg = Utils::valuesToVelocity_mod(result, k, max_states, 0);
-
-            // print centroid.U_k_fg
-            std::cout << "Centroid gtsam velocity:" << std::endl;
-            for (size_t i = 0; i < centroid.U_k_fg.size(); ++i) {
-                const auto& velocity = centroid.U_k_fg[i];
-                std::cout << "Velocity " << i + 1 << ": ";
-                std::cout << "x = " << velocity.x() << ", ";
-                std::cout << "y = " << velocity.y() << ", ";
-                std::cout << "theta = " << velocity.theta() << std::endl;
-            }
 
             // publish updated reference centroid trajectory
             // ref_traj_publisher_node->publish();
@@ -256,12 +249,17 @@ public:
             //     for (auto &&robot : robots) {
             //         robot.X_k_real.push_back(gtsam::Pose2(robot_poses[robot.robot_id - 1].x, robot_poses[robot.robot_id - 1].y, robot_poses[robot.robot_id - 1].yaw));
             //     }
-            //     centroid.X_k_real.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
+            aruco_pnode->PosesCallback();
+            centroid.X_k_real.push_back(gtsam::Pose2(centroid_pose.x, centroid_pose.y, centroid_pose.yaw));
             
-            // centroid.prev_X_k_optimized = centroid.X_k_fg;
-            // centroid.all_fg_velocities.push_back(centroid.U_k_fg);
+            centroid.prev_X_k_optimized = centroid.X_k_fg;
+            centroid.prev_U_k_optimized = centroid.U_k_fg;
+            centroid.all_fg_velocities.push_back(centroid.U_k_fg);
+
+
 
         } // end of main loop
+        rclcpp::shutdown();
 
         init_values.clear();
     }

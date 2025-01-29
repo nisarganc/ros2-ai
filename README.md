@@ -31,7 +31,7 @@ cd ..
 
 ## Run Project
 ```bash
-ros2 run pose_estimation aruco_pose_node
+ros2 launch turtles_bringup coloco_rosnodes.launch.py
 ros2 launch turtles_bringup coloco_manipulation.launch.py
 ```
 
