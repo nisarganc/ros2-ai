@@ -17,6 +17,7 @@ echo 'export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}' >> ~/.bashrc
 echo 'export LD_LIBRARY_PATH=/usr/local/share:${LD_LIBRARY_PATH}' >> ~/.bashrc
 source ~/.bashrc
 cd ..
+cd ..
 ```
 
 ## Project Set-up

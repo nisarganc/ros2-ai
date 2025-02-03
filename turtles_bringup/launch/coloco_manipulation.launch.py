@@ -9,6 +9,12 @@ def generate_launch_description():
     return LaunchDescription(
         [
             Node(
+                package="pose_estimation",
+                executable="aruco_poses_publisher",
+                name="aruco_poses_publisher",
+                output="screen",
+            ),
+            Node(
                 package="optimizer",
                 executable="optimizer",
                 name="optimizer",
