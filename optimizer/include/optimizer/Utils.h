@@ -91,7 +91,7 @@ namespace Utils
   {
     Eigen::Vector2f vector_StartToEnd = make_vector(start_point, end_point);
     double angle = atan2(vector_StartToEnd(1), vector_StartToEnd(0));
-    angle = ensure_orientation_range(angle);
+    angle = ensure_orientation_range2(angle);
 
     return angle;
   }
@@ -101,65 +101,47 @@ namespace Utils
    * @param values: Values container with the values inside it 
    * @return returned_trajectory of std::vector<gtsam:Pose2> 
    */ 
-  std::vector<gtsam::Pose2> valuesToPose_mod(gtsam::Values& values, int k, int nr_of_steps, int robot_id)
+  std::vector<gtsam::Pose2> valuesToPose_mod(gtsam::Values& values, int nr_of_steps)
   {
     int max_states = nr_of_steps;
     std::vector<gtsam::Pose2> returned_trajectory;
     gtsam::Symbol key_pos;
 
     // Create the initial pose
-    gtsam::Pose2 pose = (k < 0) ? gtsam::Pose2(0, 0, 0) : gtsam::Pose2();
+    gtsam::Pose2 pose = gtsam::Pose2();
 
     for (int i = 0; i <= max_states; ++i)
     {
-        if (i >= k)
-        {
-            // Update the key_pos based on robot_id only when necessary
-            switch (robot_id)
-            {
-                case 0:
-                    key_pos = gtsam::Symbol('C', i);
-                    break;
-                case 1:
-                    key_pos = gtsam::Symbol('X', i);
-                    break;
-                case 2:
-                    key_pos = gtsam::Symbol('Y', i);
-                    break;
-            }
+      key_pos = gtsam::Symbol('C', i);
+            
+      pose = values.at<gtsam::Pose2>(key_pos);
 
-            // Update the pose directly from values
-            pose = values.at<gtsam::Pose2>(key_pos);
-        }
+      returned_trajectory.push_back(pose);
 
-        returned_trajectory.push_back(pose);
-
-        // print the trajectory
-        std::cout << "GT Pose " << i << ": ";
-        std::cout << "x = " << pose.x() << ", ";
-        std::cout << "y = " << pose.y() << ", ";
-        std::cout << "theta = " << pose.theta() << std::endl;
+      // print the trajectory
+      std::cout << "GT Pose " << i << ": ";
+      std::cout << "x = " << pose.x() << ", ";
+      std::cout << "y = " << pose.y() << ", ";
+      std::cout << "theta = " << pose.theta() << std::endl;
 
     }
 
     return returned_trajectory;
 }
 
-std::vector<gtsam::Pose2> valuesToVelocity_mod(gtsam::Values &values, int k, int nr_of_steps, int robot_id) {
+std::vector<gtsam::Pose2> valuesToVelocity_mod(gtsam::Values &values, int nr_of_steps) {
     int max_states = nr_of_steps;
     std::vector<gtsam::Pose2> returned_velocity;
     gtsam::Symbol key_control;
 
     // Create the initial velocity
-    gtsam::Pose2 velocity = (k < 0) ? gtsam::Pose2(0, 0, 0) : gtsam::Pose2();
+    gtsam::Pose2 velocity = gtsam::Pose2();
 
     for (int i = 0; i < max_states; ++i) {
-        // Update the key_control based on robot_id only when necessary
-        if (i >= k && robot_id == 0) {
-            key_control = gtsam::Symbol('U', i);
-            // Update the velocity directly from values
-            velocity = values.at<gtsam::Pose2>(key_control);
-        }
+        
+        key_control = gtsam::Symbol('U', i);
+
+        velocity = values.at<gtsam::Pose2>(key_control);
 
         returned_velocity.push_back(velocity);
     }

@@ -13,7 +13,7 @@
 
 using std::placeholders::_1;
 
-int traj_mode=1; // stop is 0, push is 1, go back is 2, adjust position is 3
+int traj_mode=0; // stop is 0, push is 1, go back is 2, adjust position is 3
 
 using namespace std::chrono_literals;
 class VelocityPublisher : public rclcpp::Node {

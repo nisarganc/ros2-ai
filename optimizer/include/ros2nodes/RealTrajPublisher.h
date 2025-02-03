@@ -10,7 +10,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <nav_msgs/msg/path.hpp>
 
-#include <ros2nodes/ArucoPoseEstimation.h>
+#include <ros2nodes/ArucoPoseSubscriber.h>
 
 using std::placeholders::_1;
 

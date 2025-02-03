@@ -32,7 +32,7 @@ public:
     }
 
     gtsam::Vector evaluateError(const gtsam::Pose2& X_now, const gtsam::Pose2& U_now, const gtsam::Pose2& X_next, boost::optional<gtsam::Matrix&> H1 = boost::none, boost::optional<gtsam::Matrix&> H2 = boost::none, boost::optional<gtsam::Matrix&> H3 = boost::none) const {
-        double dt = 8.0; // ToDo: time_for_translation;
+        int dt = 1; // ToDo: time_for_translation;
 
         gtsam::Matrix H1_, H2_, H3_;
         computeScaledJacobians(error_scale_ternary, dt, H1_, H2_, H3_);

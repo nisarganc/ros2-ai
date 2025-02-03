@@ -8,7 +8,7 @@ struct NoiseModels {
     gtsam::noiseModel::Diagonal::shared_ptr covariance_priors;
 };
 
-std::pair<gtsam::NonlinearFactorGraph, gtsam::Values> MultiRobotFG( int k, int max_states_,
+std::pair<gtsam::NonlinearFactorGraph, gtsam::Values> CentroidFG(int max_states_,
     const CentroidData& centroid, // pass by const reference
     const NoiseModels& covariance_information, const SDF_s& sdf_) { 
 
@@ -25,7 +25,7 @@ std::pair<gtsam::NonlinearFactorGraph, gtsam::Values> MultiRobotFG( int k, int m
     int max_states = max_states_;
     std::vector<obstacle> modifiable_obstacles = sdf_.obstacles;
     
-    for (int j = k; j < max_states; ++j) {
+    for (int j = 0; j < max_states; ++j) {
         for(auto&& obstacle : modifiable_obstacles) {
             // check if the current trajectory will collide with the obstacle
             // make the distance calculation faster by using x*x not std::pow
@@ -49,30 +49,26 @@ std::pair<gtsam::NonlinearFactorGraph, gtsam::Values> MultiRobotFG( int k, int m
         gtsam::Symbol key_control_c('U', j);
         gtsam::Symbol key_pos_next_c('C', j + 1);
 
-        if (j == k) {
-            graph.add(NonlinearEquality<Pose2>(key_pos_c, centroid.X_k_real[j]));
-            init_values.insert(key_pos_c, centroid.X_k_real[j]);
+        if (j == 0) {
+            graph.add(NonlinearEquality<Pose2>(key_pos_c, centroid.X_k_real));
+            init_values.insert(key_pos_c, centroid.X_k_real);
         } else {
-            if (use_sdf) {
-                for (auto &&obstacle : modifiable_obstacles) {
-                    if (obstacle.w > 0.0) {
-                        graph.add(boost::make_shared<UnaryFactorObstacleAvoidance>(key_pos_next_c, obstacle, sdf_.sys_radius_safety_radius, sdf_.inv_sys_radius_safety_radius, covariance_obs));
-                    }
+            for (auto &&obstacle : modifiable_obstacles) {
+                if (obstacle.w > 0.0) {
+                    graph.add(boost::make_shared<UnaryFactorObstacleAvoidance>(key_pos_next_c, obstacle, sdf_.sys_radius_safety_radius, sdf_.inv_sys_radius_safety_radius, covariance_obs));
                 }
-                graph.add(PriorFactor<Pose2>(key_pos_c, centroid.prev_X_k_optimized[j], covariance_X));
-            } else {
-                graph.add(PriorFactor<Pose2>(key_pos_c, centroid.X_k_ref[j], covariance_X));
             }
-            init_values.insert(key_pos_c, centroid.prev_X_k_optimized[j]);
+            graph.add(PriorFactor<Pose2>(key_pos_c, centroid.X_k_ref[j], covariance_X));
+            init_values.insert(key_pos_c, centroid.X_k_ref[j]);
         }
 
-        graph.add(PriorFactor<Pose2>(key_control_c, centroid.prev_U_k_optimized[j], covariance_U));
-        init_values.insert(key_control_c, centroid.prev_U_k_optimized[j]); 
+        graph.add(PriorFactor<Pose2>(key_control_c, centroid.U_k_ref[j], covariance_U));
+        init_values.insert(key_control_c, centroid.U_k_ref[j]); 
         graph.add(boost::make_shared<TernaryFactorStateEstimation>(key_pos_c, key_control_c, key_pos_next_c, covariance_ternary));
 
         if (j == (max_states - 1)) {
             graph.add(PriorFactor<Pose2>(key_pos_next_c, centroid.X_k_ref[j + 1], covariance_anchors));
-            init_values.insert(key_pos_next_c, centroid.prev_X_k_optimized[j + 1]);
+            init_values.insert(key_pos_next_c, centroid.X_k_ref[j + 1]);
         }
     }
     // graph.print("Factor Graph: \n");

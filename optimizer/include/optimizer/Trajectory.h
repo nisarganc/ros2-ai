@@ -1,33 +1,32 @@
 #pragma once
 
 #include "MotionModelArc.h"
+#include "Utils.h"
 
 namespace Trajectory
 {
     class ref_trajv
     {
     private:
-        int nr_of_robots;                           
+
+        gtsam::Pose2 start_pose;  // starting pose of the centroid
+        gtsam::Pose2 end_pose; // ending pose of the centroid
         int last; // the number of iterations   
                                 
         double overall_angle; // the angle formed by start and end positions
         std::vector<double> overall_dist; // distance between start and end positions in the x-direction, y-direction, and in length
 
-        gtsam::Pose2 start_pose;  // starting pose of the centroid
-        gtsam::Pose2 end_pose; // ending pose of the centroid
         std::vector<gtsam::Pose2> reference_trajectory; // a vector storing the reference trajectory of the target
 
     public:
-        ref_trajv(int nr_of_steps, int nr_of_robots)
-        {
-            
-            last = nr_of_steps;
-            nr_of_robots = nr_of_robots;
-            overall_angle = 0;
-
+        ref_trajv(int nr_of_steps)
+        { 
             gtsam::Pose2 empty_pose(0, 0, 0);
             start_pose = empty_pose;
-            end_pose = empty_pose;            
+            end_pose = empty_pose; 
+            last = nr_of_steps;
+
+            overall_angle = 0;  
         }
 
         /**
@@ -50,12 +49,6 @@ namespace Trajectory
             end_pose = final_pose;
         }
 
-        void set_overall_angle()
-        {
-            // ToDo: check the angle normalization
-            overall_angle = Utils::angle_between_points(start_pose, end_pose);
-        }
-
         /**
          * @brief Gets the desired gtsam::Pose2 value stored in the reference trajectory vector
          * 
@@ -65,39 +58,6 @@ namespace Trajectory
         gtsam::Pose2 get_ref_pose(int state_number)
         {
             return reference_trajectory[state_number];
-        }
-
-        /**
-         * @brief Computes the difference in x, y, annd theta between 2 arbitrary states
-         * 
-         * @param state_start 1st state
-         * @param state_end 2nd state
-         * @return A gtsam::Pose2 that stores the differences {diff_x, diff_Y, diff_theta}
-         */
-        gtsam::Pose2 compute_diff(int state_start, int state_end)
-        {
-            double diff_x, diff_y, diff_theta;
-            
-            diff_x = reference_trajectory[state_end].x() - reference_trajectory[state_start].x(); 
-            diff_y = reference_trajectory[state_end].y() - reference_trajectory[state_start].y(); 
-            diff_theta = reference_trajectory[state_end].theta() - reference_trajectory[state_start].theta(); 
-            
-            gtsam::Pose2 diff(diff_x, diff_y, diff_theta);
-            return (diff);
-        }
-
-        /**
-         * @brief Computes the linear distance between 2 arbitrary states
-         * 
-         * @param state_start 1st state
-         * @param state_end 2nd state
-         * @return The linear distance calculated
-         */
-        double compute_dist(int state_start, int state_end)
-        {
-            Eigen::Vector2f vector_AToB = Utils::make_vector(reference_trajectory[state_start], reference_trajectory[state_end]);
-            double dist = vector_AToB.norm();
-            return (dist);
         }
 
         /**
@@ -112,6 +72,15 @@ namespace Trajectory
             overall_dist.push_back(x_overall_length);
             overall_dist.push_back(y_overall_length);
             overall_dist.push_back(overall_length);
+            // print the overall distance
+            std::cout << "Overall distance: " << overall_dist[0] << ", " << overall_dist[1] << ", " << overall_dist[2] << std::endl;
+        }
+
+        void set_overall_angle()
+        {
+            // ToDo: check the overall direction
+            overall_angle = Utils::angle_between_points(start_pose, end_pose);
+
         }
 
         /**
@@ -124,32 +93,20 @@ namespace Trajectory
             int i;
             double counter;
 
+            // calculate angle difference between start_pose.theta() and end_pose.theta()
+            double angle_diff = Utils::ensure_orientation_range2(end_pose.theta() - start_pose.theta());
+            std::cout << "Angle difference: " << angle_diff << std::endl;
+
             for (i = 0; i <= last; i++)
             {
                 counter = static_cast<double>(i);
                 x = start_pose.x() + counter * overall_dist[0] / last;
                 y = start_pose.y() + counter * overall_dist[1] / last;
-                // theta = start_pose.theta();
-                theta = start_pose.theta() + counter * (end_pose.theta() - start_pose.theta()) / last;
-                gtsam::Pose2 pose(x, y, theta);
+                theta = start_pose.theta() + counter * angle_diff / last;
+                gtsam::Pose2 pose(x, y, Utils::ensure_orientation_range2(theta));
+
+                std::cout << "Reference Pose " << i << ": " << pose.x() << ", " << pose.y() << ", " << pose.theta() << std::endl;
                 reference_trajectory.push_back(pose);
-            }
-
-                
-            for (i = 0; i <= last; i++)
-            {            
-                reference_trajectory[i] = gtsam::Pose2(reference_trajectory[i].x(), reference_trajectory[i].y(), reference_trajectory[i].theta());
-            }
-        }
-
-        /**
-         * @brief Prints out the reference trajectory
-        */
-        void print()
-        {
-            for(int k = 0; k < reference_trajectory.size() ; ++k)
-            {
-                reference_trajectory[k].print();
             }
         }
     };

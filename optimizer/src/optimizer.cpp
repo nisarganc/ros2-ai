@@ -9,10 +9,7 @@ int main(int argc, char * argv[])
 {  
   std::cout << "Start" << std::endl;
   
-  // optimizer
-  Optimizer optimizer;
-  optimizer.startfg();
-  
+  Optimizer();
   return 0;
 
 }

@@ -35,7 +35,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
             aruco_turtle[40] = "object";
 
             // read camera frames and print fps
-            cap = std::make_shared<cv::VideoCapture>(0);
+            cap = std::make_shared<cv::VideoCapture>(6);
             double fps = cap->get(cv::CAP_PROP_FPS);
             RCLCPP_INFO(this->get_logger(), "Camera FPS: %f", fps);
 
@@ -82,15 +82,13 @@ class ArucoPoseEstimation : public rclcpp::Node {
         rclcpp::TimerBase::SharedPtr timer_;
         std::shared_ptr<cv::VideoCapture> cap;
         cv::Ptr<cv::aruco::Dictionary> dictionary;
-        cv::Mat goal_pose, frame, cameraMatrix, distCoeffs, tvec0, rvec0, T0, rvec, tvec, Ri, Ti, T_rel, rvec_rel, tvec_rel;
+        cv::Mat goal_pose, frame, cameraMatrix, distCoeffs, T0, rvec, tvec, Ri, Ti, T_rel, rvec_rel, tvec_rel;
         std::vector<int> markerIds;
         std::vector<std::vector<cv::Point2f>> markerCorners;
         std::vector<cv::Vec3d> rvecs, tvecs;
         cv::Mat projectedGoalPoint2D, projectedArrowEndPoint2D;
 
         bool WorldFrame() {
-
-            cv::Mat R0;
 
             if (!cap->read(frame)) { 
                 RCLCPP_WARN(this->get_logger(), "Failed to capture frame");
@@ -100,6 +98,8 @@ class ArucoPoseEstimation : public rclcpp::Node {
             cv::aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
             
             if (!markerIds.empty()) {
+
+                cv::Mat rvec0, tvec0, R0;
 
                 cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.16, cameraMatrix, distCoeffs, rvecs, tvecs);                
 
@@ -120,14 +120,6 @@ class ArucoPoseEstimation : public rclcpp::Node {
                         T0.at<double>(3, 0) = 0;
                         T0.at<double>(3, 1) = 0;
                         T0.at<double>(3, 2) = 0;
-
-                        //print the transformation matrix
-                        RCLCPP_INFO(this->get_logger(), "Transformation Matrix: ");
-                        for (int i = 0; i < 4; i++) {
-                            for (int j = 0; j < 4; j++) {
-                                RCLCPP_INFO(this->get_logger(), "%f", T0.at<double>(i, j));
-                            }
-                        }
 
                         // initialize matrices
                         rvec = cv::Mat::zeros(3, 1, CV_64F);
@@ -216,7 +208,7 @@ class ArucoPoseEstimation : public rclcpp::Node {
                         marker_pose.theta = rvec_rel.at<double>(2);
                         marker_pose_array_msg.poses.push_back(marker_pose);
 
-                        RCLCPP_INFO(this->get_logger(), "marker: %d %f %f %f", markerIds[i], tvec_rel.at<double>(0), tvec_rel.at<double>(1), rvec_rel.at<double>(2));
+                        // RCLCPP_INFO(this->get_logger(), "marker: %d %f %f %f", markerIds[i], tvec_rel.at<double>(0), tvec_rel.at<double>(1), rvec_rel.at<double>(2));
                     }
                 
                     // cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);

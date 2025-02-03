@@ -16,7 +16,7 @@ find_package(tf2 REQUIRED)
 find_package(msgs_interfaces REQUIRED)
 
 # Define the main executable
-add_executable(aruco_poses_publisher src/aruco_pose_estimation.cpp)
+add_executable(aruco_poses_publisher src/ArucoPoseEstimation.cpp)
 
 # Depend on ROS 2 and other necessary libraries
 ament_target_dependencies(aruco_poses_publisher
